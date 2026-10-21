@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="video_filter_entries">
+        <item>@string/filter_sharp</item>
+        <item>@string/filter_nearest</item>
+        <item>@string/filter_linear</item>
+    </string-array>
+    <string-array name="video_filter_values" translatable="false">
+        <item>sharp</item>
+        <item>nearest</item>
+        <item>linear</item>
+    </string-array>
+
+    <string-array name="video_effect_entries">
+        <item>@string/effect_none</item>
+        <item>@string/effect_scanlines</item>
+        <item>@string/effect_lcd</item>
+    </string-array>
+    <string-array name="video_effect_values" translatable="false">
+        <item>none</item>
+        <item>scanlines</item>
+        <item>lcd</item>
+    </string-array>
+
+    <string-array name="aspect_entries">
+        <item>@string/aspect_keep</item>
+        <item>@string/aspect_integer</item>
+        <item>@string/aspect_stretch</item>
+    </string-array>
+    <string-array name="aspect_values" translatable="false">
+        <item>keep</item>
+        <item>integer</item>
+        <item>stretch</item>
+    </string-array>
+
+    <string-array name="orientation_entries">
+        <item>@string/orientation_auto</item>
+        <item>@string/orientation_portrait</item>
+        <item>@string/orientation_landscape</item>
+    </string-array>
+    <string-array name="orientation_values" translatable="false">
+        <item>auto</item>
+        <item>portrait</item>
+        <item>landscape</item>
+    </string-array>
+
+    <string-array name="frameskip_entries">
+        <item>@string/frameskip_off</item>
+        <item>@string/frameskip_1</item>
+        <item>@string/frameskip_2</item>
+        <item>@string/frameskip_3</item>
+    </string-array>
+    <string-array name="frameskip_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="ff_speed_entries">
+        <item>2×</item>
+        <item>3×</item>
+        <item>4×</item>
+        <item>6×</item>
+        <item>8×</item>
+        <item>@string/ff_unlimited</item>
+    </string-array>
+    <string-array name="ff_speed_values" translatable="false">
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>6</item>
+        <item>8</item>
+        <item>0</item>
+    </string-array>
+
+    <string-array name="rewind_entries">
+        <item>@string/seconds_10</item>
+        <item>@string/seconds_20</item>
+        <item>@string/seconds_30</item>
+        <item>@string/seconds_60</item>
+    </string-array>
+    <string-array name="rewind_values" translatable="false">
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+</resources>
