@@ -61,7 +61,4 @@ class CheatStore(context: Context, gameKey: String) {
         tmp.writeText(array.toString(2))
         tmp.renameTo(file)
     }
-
-    /** Last modification time, so the game can tell when to re-apply cheats. */
-    fun lastModified(): Long = if (file.isFile) file.lastModified() else 0L
 }

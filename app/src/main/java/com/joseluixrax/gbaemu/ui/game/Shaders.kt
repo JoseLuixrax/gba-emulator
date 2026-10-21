@@ -89,17 +89,23 @@ void main() {
         )
         when (effect) {
             Effect.NONE -> Unit
+            // Both effects darken the last screen pixels of every game pixel,
+            // measured in real screen pixels so they look right at any scale.
             Effect.SCANLINES -> append(
                 """
-    float line = abs(fract(vTexCoord.y * uTextureSize.y) - 0.5) * 2.0;
-    rgb *= mix(1.0, 0.55, smoothstep(0.5, 1.0, line));
+    float scaleY = uOutputSize.y / uTextureSize.y;
+    float fromBottom = (1.0 - fract(vTexCoord.y * uTextureSize.y)) * scaleY;
+    float lineWidth = max(1.0, floor(scaleY / 3.0));
+    rgb *= 1.0 - 0.45 * step(fromBottom, lineWidth);
 """,
             )
             Effect.LCD -> append(
                 """
-    vec2 cell = abs(fract(vTexCoord * uTextureSize) - 0.5) * 2.0;
-    float grid = max(smoothstep(0.65, 1.0, cell.x), smoothstep(0.65, 1.0, cell.y));
-    rgb *= 1.0 - 0.4 * grid;
+    vec2 scale = uOutputSize / uTextureSize;
+    vec2 fromEnd = (1.0 - fract(vTexCoord * uTextureSize)) * scale;
+    vec2 lineWidth = max(vec2(1.0), floor(scale / 5.0));
+    vec2 grid = step(fromEnd, lineWidth);
+    rgb *= 1.0 - 0.3 * max(grid.x, grid.y);
 """,
             )
         }
