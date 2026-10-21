@@ -72,7 +72,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     private lateinit var cheatStore: CheatStore
     private var gameName = ""
 
-    @Volatile private var cheatsAppliedAt = -1L
+    /** The cheats currently active in the core, to detect edits made in CheatsActivity. */
+    private var appliedCheats: List<Cheat> = emptyList()
     private var gameLoaded = false
     private var hardware = 0
     private var platform = NativeBridge.PLATFORM_GBA
@@ -204,7 +205,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             val autoState = files.stateFile(GameFiles.AUTO_SLOT)
             val loadAuto = prefs.autoLoadState && autoState.isFile
             val cheats = withContext(Dispatchers.IO) { cheatStore.load() }
-            val cheatsStamp = cheatStore.lastModified()
+            appliedCheats = cheats.map { it.copy() }
 
             emulator.post {
                 val ok = NativeBridge.loadRom(
@@ -218,7 +219,6 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
                     hw = NativeBridge.hardware()
                     loadedPlatform = NativeBridge.platform()
                     applyCheats(cheats)
-                    cheatsAppliedAt = cheatsStamp
                     if (loadAuto) restored = NativeBridge.loadState(autoState.path)
                 }
                 runOnUiThread { onGameLoaded(ok, hw, loadedPlatform, restored) }
@@ -277,6 +277,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         emulator.audioEnabled = prefs.audioEnabled
 
         binding.pad.apply {
+            // The layout may have been reset from the settings screen.
+            if (!editMode) reloadLayout()
             opacity = prefs.padOpacity / 100f
             globalScale = prefs.padScale / 100f
             hapticsEnabled = prefs.haptics
@@ -639,10 +641,9 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     }
 
     private fun reapplyCheatsIfChanged() {
-        val stamp = cheatStore.lastModified()
-        if (stamp == cheatsAppliedAt) return
-        cheatsAppliedAt = stamp
         val cheats = cheatStore.load()
+        if (cheats == appliedCheats) return
+        appliedCheats = cheats.map { it.copy() }
         emulator.post { applyCheats(cheats) }
     }
 

@@ -109,12 +109,13 @@ class LibraryActivity : AppCompatActivity() {
         refresh()
     }
 
-    /** "Open with" from a file manager. */
+    /** "Open with" from a file manager, or a home screen shortcut. */
     private fun handleViewIntent(intent: Intent?) {
         val uri = intent?.data ?: return
         if (intent.action != Intent.ACTION_VIEW) return
+        val name = intent.getStringExtra(GameActivity.EXTRA_DISPLAY_NAME) ?: RomLoader.displayName(this, uri)
         setIntent(Intent(this, LibraryActivity::class.java))
-        launchGame(uri, RomLoader.displayName(this, uri))
+        launchGame(uri, name)
     }
 
     private fun refresh() {
@@ -270,7 +271,8 @@ class LibraryActivity : AppCompatActivity() {
         } else {
             IconCompat.createWithResource(this, R.mipmap.ic_launcher)
         }
-        val intent = Intent(this, GameActivity::class.java)
+        // Goes through this (exported) activity, which opens the game.
+        val intent = Intent(this, LibraryActivity::class.java)
             .setAction(Intent.ACTION_VIEW)
             .setData(game.uri)
             .putExtra(GameActivity.EXTRA_DISPLAY_NAME, game.name)
