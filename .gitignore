@@ -1,0 +1,16 @@
+# Gradle / Android Studio
+.gradle/
+build/
+/local.properties
+.idea/
+*.iml
+.cxx/
+.externalNativeBuild/
+captures/
+.DS_Store
+
+# Downloaded at build time by app/build.gradle.kts
+/third_party/
+
+# Native test output
+/native-test/out/

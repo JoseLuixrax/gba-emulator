@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Indigo / violet, like the original Game Boy Advance. -->
+    <color name="brand_primary">#4F3FA8</color>
+    <color name="brand_primary_dark">#B9AEFF</color>
+    <color name="brand_secondary">#7B6FC2</color>
+    <color name="brand_icon_background">#3E2F94</color>
+    <color name="white">#FFFFFF</color>
+</resources>
