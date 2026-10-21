@@ -18,6 +18,9 @@ endif()
 set(CMAKE_C_FLAGS_DEBUG "-O2 -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 
+# libmgba is linked into a shared library, so it must be position independent.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # mGBA declares an old minimum CMake version; newer CMake needs this hint.
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
@@ -29,6 +32,8 @@ add_subdirectory("${MGBA_DIR}" mgba EXCLUDE_FROM_ALL)
 if(ANDROID)
 	add_library(gbaemu SHARED emu_core.c jni_bridge.c)
 	target_link_libraries(gbaemu PRIVATE mgba log)
+	# Only the JNI entry points (JNIEXPORT) are visible outside the library.
+	set_target_properties(gbaemu PROPERTIES C_VISIBILITY_PRESET hidden)
 	# Only export JNI symbols; smaller library and faster loading.
 	target_link_options(gbaemu PRIVATE "-Wl,--exclude-libs,ALL" "-Wl,--gc-sections")
 	# 16 KB page size support (required for new apps on Android 15+ devices).

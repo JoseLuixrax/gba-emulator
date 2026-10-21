@@ -62,7 +62,7 @@ android {
 
     defaultConfig {
         applicationId = "com.joseluixrax.gbaemu"
-        minSdk = 24
+        minSdk = 26 // Android 8.0: mGBA needs strtof_l from bionic (API 26+)
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"

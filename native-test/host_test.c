@@ -238,6 +238,12 @@ static void testRom(const char* romDir, const char* name, const char* outDir) {
 	snapshot(frameB, &w, &h);
 	CHECK(memcmp(frameA, frameB, w * h * 4) == 0, "%s: state reload is not deterministic", name);
 
+	/* Fast forward path: frames whose audio is thrown away. */
+	for (int i = 0; i < 30; ++i) {
+		emu_run_frame();
+		emu_discard_audio();
+	}
+
 	/* Rewind: record, step back, keep running. */
 	emu_set_rewind(true, 120, 1);
 	runFrames(90, NULL);

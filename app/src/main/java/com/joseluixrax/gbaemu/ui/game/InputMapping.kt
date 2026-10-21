@@ -3,26 +3,27 @@ package com.joseluixrax.gbaemu.ui.game
 import android.content.SharedPreferences
 import android.view.KeyEvent
 import androidx.annotation.StringRes
-import com.joseluixrax.gbaemu.R
+// Aliased: the enum entry `R` (shoulder button) would otherwise hide the R class.
+import com.joseluixrax.gbaemu.R as Res
 import com.joseluixrax.gbaemu.emulator.GbaKeys
 
 /** Things a physical button (gamepad, keyboard) can be bound to. */
 enum class InputAction(val id: String, @StringRes val label: Int, val gbaKey: Int = 0) {
-    UP("up", R.string.key_up, GbaKeys.UP),
-    DOWN("down", R.string.key_down, GbaKeys.DOWN),
-    LEFT("left", R.string.key_left, GbaKeys.LEFT),
-    RIGHT("right", R.string.key_right, GbaKeys.RIGHT),
-    A("a", R.string.key_a, GbaKeys.A),
-    B("b", R.string.key_b, GbaKeys.B),
-    L("l", R.string.key_l, GbaKeys.L),
-    R("r", R.string.key_r, GbaKeys.R),
-    START("start", R.string.key_start, GbaKeys.START),
-    SELECT("select", R.string.key_select, GbaKeys.SELECT),
-    FAST_FORWARD("fast_forward", R.string.key_fast_forward),
-    REWIND("rewind", R.string.key_rewind),
-    MENU("menu", R.string.key_menu),
-    QUICK_SAVE("quick_save", R.string.key_quick_save),
-    QUICK_LOAD("quick_load", R.string.key_quick_load),
+    UP("up", Res.string.key_up, GbaKeys.UP),
+    DOWN("down", Res.string.key_down, GbaKeys.DOWN),
+    LEFT("left", Res.string.key_left, GbaKeys.LEFT),
+    RIGHT("right", Res.string.key_right, GbaKeys.RIGHT),
+    A("a", Res.string.key_a, GbaKeys.A),
+    B("b", Res.string.key_b, GbaKeys.B),
+    L("l", Res.string.key_l, GbaKeys.L),
+    R("r", Res.string.key_r, GbaKeys.R),
+    START("start", Res.string.key_start, GbaKeys.START),
+    SELECT("select", Res.string.key_select, GbaKeys.SELECT),
+    FAST_FORWARD("fast_forward", Res.string.key_fast_forward),
+    REWIND("rewind", Res.string.key_rewind),
+    MENU("menu", Res.string.key_menu),
+    QUICK_SAVE("quick_save", Res.string.key_quick_save),
+    QUICK_LOAD("quick_load", Res.string.key_quick_load),
 }
 
 /**

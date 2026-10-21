@@ -122,7 +122,7 @@ class LibraryActivity : AppCompatActivity() {
         lifecycleScope.launch {
             var roms = folderRoms
             if (roms == null && folder != null) {
-                binding.progress.isVisible = adapter.itemCount == 0
+                binding.progress.isVisible = adapter.getItemCount() == 0
                 roms = withContext(Dispatchers.IO) { RomScanner.scan(this@LibraryActivity, folder) }
                 folderRoms = roms
                 binding.progress.isVisible = false

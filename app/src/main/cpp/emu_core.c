@@ -436,12 +436,15 @@ void emu_discard_audio(void) {
 	if (!core) {
 		return;
 	}
+	/* blip_buf has no "skip" call: read into scratch space and drop it. */
+	static int16_t scratch[1024];
 	blip_t* left = core->getAudioChannel(core, 0);
 	blip_t* right = core->getAudioChannel(core, 1);
-	int available = blip_samples_avail(left);
-	if (available > 0) {
-		blip_read_samples(left, NULL, available, false);
-		blip_read_samples(right, NULL, available, false);
+	int available;
+	while ((available = blip_samples_avail(left)) > 0) {
+		int count = available > 1024 ? 1024 : available;
+		blip_read_samples(left, scratch, count, false);
+		blip_read_samples(right, scratch, count, false);
 	}
 }
 
