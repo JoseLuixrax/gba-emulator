@@ -67,5 +67,17 @@
             android:name=".ui.settings.KeyMappingActivity"
             android:exported="false"
             android:label="@string/key_mapping" />
+
+        <!-- Shows saves/ and states/ in the system Files app as "AdvanceBoy". -->
+        <provider
+            android:name=".storage.GameFilesProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
     </application>
 </manifest>
