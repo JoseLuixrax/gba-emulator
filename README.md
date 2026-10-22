@@ -66,6 +66,8 @@ states/<juego>/slotN.state   estados guardados (slot0 = automático)
 states/<juego>/slotN.png     miniaturas
 ```
 
+Para llegar a esa carpeta desde el móvil: **Ajustes → Archivos → Abrir carpeta de partidas**. Además aparece como **AdvanceBoy** en el menú lateral de la app *Archivos* (y en cualquier selector de archivos), así puedes copiar, compartir o sustituir los `.sav` sin ordenador. Desde Android 11 los gestores de archivos no pueden entrar en `Android/data`, por eso se hace así.
+
 Las capturas de pantalla van a la galería, carpeta `Pictures/AdvanceBoy`.
 
 ### BIOS

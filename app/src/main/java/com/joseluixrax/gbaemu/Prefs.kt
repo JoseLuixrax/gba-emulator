@@ -79,6 +79,7 @@ class Prefs(context: Context) {
         const val KEY_SKIP_BIOS = "skip_bios"
         const val KEY_GYRO_SENSITIVITY = "gyro_sensitivity"
         const val KEY_ABOUT = "about"
+        const val KEY_OPEN_SAVES = "open_saves_folder"
         const val KEY_LICENSES = "licenses"
         const val KEY_ROM_FOLDER = "rom_folder"
     }

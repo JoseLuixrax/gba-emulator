@@ -199,6 +199,16 @@
 
     <PreferenceCategory
         app:iconSpaceReserved="false"
+        app:title="@string/pref_cat_files">
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="open_saves_folder"
+            app:summary="@string/pref_open_saves_summary"
+            app:title="@string/saves_folder" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
         app:title="@string/pref_cat_bios">
         <Preference
             app:iconSpaceReserved="false"

@@ -151,6 +151,11 @@
     <string name="pref_gb_colorize_summary">Use Game Boy Color palettes for original Game Boy games</string>
     <string name="pref_gyro">Gyroscope sensitivity</string>
     <string name="pref_gyro_summary">For WarioWare: Twisted! (percentage)</string>
+    <string name="pref_cat_files">Files</string>
+    <string name="saves_folder">Open saves folder</string>
+    <string name="pref_open_saves_summary">Your .sav files and save states. They also appear in the Files app as “AdvanceBoy”.</string>
+    <string name="files_root_summary">Saves and save states</string>
+    <string name="saves_folder_manual">Your saves are in:\n%1$s\n\nOpen the Files app and look for “AdvanceBoy” in its side menu, or long-press a game in the library and use “Export save”.</string>
     <string name="pref_cat_bios">BIOS</string>
     <string name="pref_bios">GBA BIOS file (optional)</string>
     <string name="pref_bios_installed">Installed. The real BIOS is used.</string>

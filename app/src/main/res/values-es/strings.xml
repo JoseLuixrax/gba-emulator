@@ -141,6 +141,11 @@
     <string name="pref_gb_colorize_summary">Usa las paletas de Game Boy Color en los juegos de Game Boy original</string>
     <string name="pref_gyro">Sensibilidad del giroscopio</string>
     <string name="pref_gyro_summary">Para WarioWare: Twisted! (porcentaje)</string>
+    <string name="pref_cat_files">Archivos</string>
+    <string name="saves_folder">Abrir carpeta de partidas</string>
+    <string name="pref_open_saves_summary">Tus partidas .sav y estados guardados. También aparecen en la app Archivos como «AdvanceBoy».</string>
+    <string name="files_root_summary">Partidas y estados guardados</string>
+    <string name="saves_folder_manual">Tus partidas están en:\n%1$s\n\nAbre la app Archivos y busca «AdvanceBoy» en su menú lateral, o mantén pulsado un juego en la biblioteca y usa «Exportar partida».</string>
     <string name="pref_cat_bios">BIOS</string>
     <string name="pref_bios">Archivo BIOS de GBA (opcional)</string>
     <string name="pref_bios_installed">Instalada. Se usa la BIOS real.</string>

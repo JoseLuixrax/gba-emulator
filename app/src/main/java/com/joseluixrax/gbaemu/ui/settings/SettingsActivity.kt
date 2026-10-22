@@ -15,6 +15,7 @@ import com.joseluixrax.gbaemu.Prefs
 import com.joseluixrax.gbaemu.R
 import com.joseluixrax.gbaemu.databinding.ActivitySettingsBinding
 import com.joseluixrax.gbaemu.emulator.GameFiles
+import com.joseluixrax.gbaemu.storage.SavesFolder
 import com.joseluixrax.gbaemu.ui.game.PadLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,6 +56,10 @@ class SettingsActivity : AppCompatActivity() {
                     }
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
+                true
+            }
+            findPreference<Preference>(Prefs.KEY_OPEN_SAVES)?.setOnPreferenceClickListener {
+                SavesFolder.open(requireContext())
                 true
             }
             findPreference<Preference>(Prefs.KEY_BIOS)?.setOnPreferenceClickListener {
