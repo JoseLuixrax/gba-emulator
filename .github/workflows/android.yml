@@ -66,8 +66,15 @@ jobs:
         id: apk
         run: |
           VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          if [[ "$GITHUB_REF" == refs/tags/v* && "$GITHUB_REF_NAME" != "v$VERSION" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match versionName $VERSION in app/build.gradle.kts"
+            exit 1
+          fi
           NAME="AdvanceBoy-${VERSION}-${GITHUB_SHA::7}.apk"
           cp app/build/outputs/apk/release/app-release.apk "$NAME"
+          # Same file under a fixed name for releases, so
+          # .../releases/latest/download/AdvanceBoy.apk always points to the newest one.
+          cp app/build/outputs/apk/release/app-release.apk AdvanceBoy.apk
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
@@ -82,5 +89,13 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.apk.outputs.name }}
-          generate_release_notes: true
+          name: AdvanceBoy ${{ github.ref_name }}
+          files: AdvanceBoy.apk
+          body: |
+            Descarga **AdvanceBoy.apk** (abajo, en *Assets*) desde el móvil e instálalo.
+            Android pedirá permitir *instalar apps desconocidas* para el navegador o el gestor de archivos.
+
+            Enlace fijo a la última versión:
+            https://github.com/${{ github.repository }}/releases/latest/download/AdvanceBoy.apk
+
+            Requiere Android 8.0 o superior. Se instala encima de versiones anteriores sin perder partidas.

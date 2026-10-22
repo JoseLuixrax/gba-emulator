@@ -9,20 +9,25 @@ El núcleo de emulación es **[mGBA](https://mgba.io) 0.10.5**, el emulador de G
 
 ## 1. Conseguir el APK sin instalar nada (recomendado)
 
+**Descarga directa de la última versión (enlace fijo):**
+https://github.com/JoseLuixrax/gba-emulator/releases/latest/download/AdvanceBoy.apk
+
+Ábrelo desde el navegador del móvil, descarga el APK e instálalo. Ese enlace siempre apunta a la Release más reciente.
+
 El repositorio trae un workflow de **GitHub Actions** que compila el APK en la nube en cada `push`:
 
 1. En GitHub, ve a la pestaña **Actions** → workflow **Build APK** → la última ejecución en verde.
 2. Abajo, en **Artifacts**, descarga **`AdvanceBoy-apk`** (es un `.zip` con el `.apk` dentro).
 3. Pásalo al móvil e instálalo (Android te pedirá permitir *instalar apps desconocidas* para tu navegador / gestor de archivos).
 
-**Versión publicada (más cómodo desde el móvil):** crea un tag y GitHub publicará una *Release* con el APK adjunto:
+**Publicar una versión nueva:** sube `versionCode` y `versionName` en `app/build.gradle.kts` (por ejemplo a `2` y `"1.1.0"`), haz commit y crea un tag con el mismo número:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
-Luego entra desde el móvil a `github.com/<tu-usuario>/gba-emulator/releases` y descarga el APK.
+GitHub Actions publicará la *Release* con `AdvanceBoy.apk` adjunto y el enlace fijo de arriba pasará a darte esa versión. Si el tag no coincide con `versionName`, la compilación falla a propósito para avisarte.
 
 > Todas las compilaciones se firman con la misma clave (`app/debug.keystore`), así que **cada APK nuevo se instala encima del anterior sin perder partidas**. Si algún día lo publicas en Google Play, crea tu propia clave privada (ver sección 8).
 
