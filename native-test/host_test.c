@@ -238,6 +238,15 @@ static void testRom(const char* romDir, const char* name, const char* outDir) {
 	snapshot(frameB, &w, &h);
 	CHECK(memcmp(frameA, frameB, w * h * 4) == 0, "%s: state reload is not deterministic", name);
 
+	/* Fast forward with sound at 4x: a quarter of the samples per frame. */
+	emu_set_audio_speed(4.0f);
+	emu_discard_audio();
+	size_t ffAudio = 0;
+	runFrames(120, &ffAudio);
+	emu_set_audio_speed(1.0f);
+	double ffPerFrame = ffAudio / 120.0;
+	CHECK(ffPerFrame > perFrame / 4 - 10 && ffPerFrame < perFrame / 4 + 10, "%s: 4x audio gives %.1f samples/frame", name, ffPerFrame);
+
 	/* Fast forward path: frames whose audio is thrown away. */
 	for (int i = 0; i < 30; ++i) {
 		emu_run_frame();

@@ -287,6 +287,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         }
         fastForwardToggleMode = prefs.fastForwardToggle
         emulator.fastForwardSpeed = prefs.fastForwardSpeed
+        emulator.fastForwardAudio = prefs.fastForwardAudio
         keyLookup = InputMapping.buildLookup(prefs.raw)
         sensors.gyroSensitivity = prefs.gyroSensitivity / 100f
 

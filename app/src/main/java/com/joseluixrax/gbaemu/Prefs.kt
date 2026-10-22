@@ -34,6 +34,7 @@ class Prefs(context: Context) {
 
     // Emulation
     val fastForwardSpeed: Int get() = raw.getString(KEY_FF_SPEED, "4")?.toIntOrNull() ?: 4
+    val fastForwardAudio: Boolean get() = raw.getBoolean(KEY_FF_AUDIO, true)
     val rewindEnabled: Boolean get() = raw.getBoolean(KEY_REWIND_ENABLED, false)
     val rewindSeconds: Int get() = raw.getString(KEY_REWIND_SECONDS, "20")?.toIntOrNull() ?: 20
     val autoSaveState: Boolean get() = raw.getBoolean(KEY_AUTO_SAVE_STATE, true)
@@ -67,6 +68,7 @@ class Prefs(context: Context) {
         const val KEY_RESET_LAYOUT = "reset_layout"
         const val KEY_KEY_MAPPING = "key_mapping"
         const val KEY_FF_SPEED = "ff_speed"
+        const val KEY_FF_AUDIO = "ff_audio"
         const val KEY_REWIND_ENABLED = "rewind_enabled"
         const val KEY_REWIND_SECONDS = "rewind_seconds"
         const val KEY_AUTO_SAVE_STATE = "auto_save_state"

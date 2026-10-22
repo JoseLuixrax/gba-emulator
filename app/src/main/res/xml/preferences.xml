@@ -142,6 +142,12 @@
             app:title="@string/pref_ff_speed"
             app:useSimpleSummaryProvider="true" />
         <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:iconSpaceReserved="false"
+            app:key="ff_audio"
+            app:summary="@string/pref_ff_audio_summary"
+            app:title="@string/pref_ff_audio" />
+        <SwitchPreferenceCompat
             app:defaultValue="false"
             app:iconSpaceReserved="false"
             app:key="rewind_enabled"

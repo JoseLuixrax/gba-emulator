@@ -98,6 +98,9 @@ size_t emu_copy_video(void* dst, size_t dstCapacity, unsigned* width, unsigned* 
 /* Reads up to maxFrames stereo frames (interleaved L/R int16). */
 size_t emu_read_audio(int16_t* dst, size_t maxFrames);
 void emu_discard_audio(void);
+/* Plays audio `speed` times faster (fast forward): each emulated second
+ * produces 1/speed seconds of audio, so pitch and tempo rise together. */
+void emu_set_audio_speed(float speed);
 
 bool emu_save_state(const char* path);
 bool emu_load_state(const char* path);
