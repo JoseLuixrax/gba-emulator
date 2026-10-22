@@ -14,12 +14,14 @@ plugins {
 val mgbaVersion = "0.10.5"
 val mgbaUrl = "https://github.com/mgba-emu/mgba/archive/refs/tags/$mgbaVersion.tar.gz"
 // SHA-256 of the archive above. Leave empty to skip verification.
-val mgbaSha256 = ""
+val mgbaSha256 = "91d6fbd32abcbdf030d58d3f562de25ebbc9d56040d513ff8e5c19bee9dacf14"
 val mgbaDir: File = rootDir.resolve("third_party/mgba")
+// Bump when the list of extracted files changes, to force a fresh extraction.
+val mgbaMarker = "$mgbaVersion-2"
 
 fun ensureMgbaSources() {
     val marker = mgbaDir.resolve(".mgba-version")
-    if (marker.isFile && marker.readText().trim() == mgbaVersion) return
+    if (marker.isFile && marker.readText().trim() == mgbaMarker) return
 
     logger.lifecycle("Downloading mGBA $mgbaVersion from $mgbaUrl")
     val archive = layout.buildDirectory.file("tmp/mgba-$mgbaVersion.tar.gz").get().asFile
@@ -40,7 +42,8 @@ fun ensureMgbaSources() {
         from(tarTree(resources.gzip(archive)))
         // Only what the native build needs; drops desktop frontends and test media.
         include(
-            "*/CMakeLists.txt", "*/version.cmake", "*/LICENSE",
+            // README.md and CHANGES are checked by mGBA's CPack setup.
+            "*/CMakeLists.txt", "*/version.cmake", "*/LICENSE", "*/README.md", "*/CHANGES",
             "*/include/**", "*/src/**", "*/res/licenses/**",
         )
         exclude("*/src/platform/qt/**", "*/src/platform/3ds/**", "*/src/platform/wii/**",
@@ -50,7 +53,7 @@ fun ensureMgbaSources() {
         includeEmptyDirs = false
         into(mgbaDir)
     }
-    marker.writeText(mgbaVersion)
+    marker.writeText(mgbaMarker)
 }
 
 ensureMgbaSources()
