@@ -136,6 +136,8 @@
     <string name="layout_reset_done">Controls layout reset</string>
     <string name="pref_cat_emulation">Emulation</string>
     <string name="pref_ff_speed">Fast forward speed</string>
+    <string name="pref_ff_audio">Sound while fast forwarding</string>
+    <string name="pref_ff_audio_summary">Music plays sped up, at the fast forward speed (not with Unlimited)</string>
     <string name="pref_rewind">Rewind</string>
     <string name="pref_rewind_summary">Adds a rewind button. Uses more memory and battery.</string>
     <string name="pref_rewind_seconds">Rewind length</string>

@@ -101,6 +101,10 @@ JNIEXPORT void JNICALL JNI_FN(discardAudio)(JNIEnv* env, jobject thiz) {
 	emu_discard_audio();
 }
 
+JNIEXPORT void JNICALL JNI_FN(setAudioSpeed)(JNIEnv* env, jobject thiz, jfloat speed) {
+	emu_set_audio_speed(speed);
+}
+
 JNIEXPORT jboolean JNICALL JNI_FN(saveState)(JNIEnv* env, jobject thiz, jstring path) {
 	char* p = _dupString(env, path);
 	bool ok = emu_save_state(p);

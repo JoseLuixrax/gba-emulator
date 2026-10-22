@@ -42,7 +42,7 @@ Requisitos del móvil: **Android 8.0 o superior** (ARM64, ARMv7 o x86_64).
 | Añadir juegos | Primera pantalla → **Elegir carpeta de ROMs** (busca `.gba`, `.gb`, `.gbc` y `.zip`, también en subcarpetas). O **Abrir un archivo ROM** suelto. |
 | Jugar | Toca el juego. Si saliste a mitad, continúa donde lo dejaste (estado automático). |
 | Menú del juego | Botón **≡** en pantalla o botón **Atrás** del móvil: guardar/cargar estado, avance rápido, trucos, captura, editar controles, ajustes, reiniciar, salir. |
-| Avance rápido | Botón **»** (toque = activar/desactivar; configurable a "mantener"). Velocidad en Ajustes (2× – 8× o sin límite). |
+| Avance rápido | Botón **»** (toque = activar/desactivar; configurable a "mantener"). Velocidad en Ajustes (2× – 8× o sin límite). La música se acelera al mismo ritmo (se puede silenciar en Ajustes; con «sin límite» va sin sonido). |
 | Rebobinar | Actívalo en Ajustes → aparece el botón **«** (mantener pulsado). |
 | Estados guardados | 10 ranuras + guardado automático, con miniatura y fecha. Mantén pulsada una ranura para borrarla. |
 | Editar controles | Menú → *Editar posición de los controles*: arrastra cada botón, pellizca (o usa − / +) para cambiar tamaño. Se guarda por separado para vertical y horizontal. |

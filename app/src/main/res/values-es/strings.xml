@@ -126,6 +126,8 @@
     <string name="layout_reset_done">Controles restablecidos</string>
     <string name="pref_cat_emulation">Emulación</string>
     <string name="pref_ff_speed">Velocidad del avance rápido</string>
+    <string name="pref_ff_audio">Sonido en avance rápido</string>
+    <string name="pref_ff_audio_summary">La música suena acelerada, a la misma velocidad del avance rápido (no con «Sin límite»)</string>
     <string name="pref_rewind">Rebobinar</string>
     <string name="pref_rewind_summary">Añade un botón para rebobinar. Usa más memoria y batería.</string>
     <string name="pref_rewind_seconds">Duración del rebobinado</string>

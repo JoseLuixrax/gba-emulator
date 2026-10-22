@@ -51,6 +51,7 @@
 static struct {
 	struct mCore* core;
 	color_t* video;
+	unsigned sampleRate;
 	bool configInitialized;
 
 	struct mCoreRewindContext rewind;
@@ -212,6 +213,7 @@ bool emu_load(const void* rom, size_t romSize, const char* savePath, const char*
 	emu.video = calloc(EMU_MAX_WIDTH * EMU_MAX_HEIGHT, sizeof(color_t));
 	core->setVideoBuffer(core, emu.video, EMU_MAX_WIDTH);
 	core->setAudioBufferSize(core, AUDIO_BUFFER_SAMPLES);
+	emu.sampleRate = opts->sampleRate;
 	blip_set_rates(core->getAudioChannel(core, 0), core->frequency(core), opts->sampleRate);
 	blip_set_rates(core->getAudioChannel(core, 1), core->frequency(core), opts->sampleRate);
 
@@ -446,6 +448,21 @@ void emu_discard_audio(void) {
 		blip_read_samples(left, scratch, count, false);
 		blip_read_samples(right, scratch, count, false);
 	}
+}
+
+void emu_set_audio_speed(float speed) {
+	struct mCore* core = emu.core;
+	if (!core || !emu.sampleRate) {
+		return;
+	}
+	if (speed < 1.0f) {
+		speed = 1.0f;
+	}
+	/* blip_buf resamples to a lower rate; played back at the normal rate the
+	 * result is `speed` times faster, without aliasing. */
+	double rate = emu.sampleRate / (double) speed;
+	blip_set_rates(core->getAudioChannel(core, 0), core->frequency(core), rate);
+	blip_set_rates(core->getAudioChannel(core, 1), core->frequency(core), rate);
 }
 
 /* ------------------------------------------------------------ save states */

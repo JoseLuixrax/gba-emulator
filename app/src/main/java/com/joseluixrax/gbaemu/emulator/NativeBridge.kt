@@ -49,6 +49,9 @@ object NativeBridge {
     external fun readAudio(buffer: ShortArray): Int
     external fun discardAudio()
 
+    /** Fast forward audio: [speed] times faster (and higher pitched). 1 = normal. */
+    external fun setAudioSpeed(speed: Float)
+
     external fun saveState(path: String): Boolean
     external fun loadState(path: String): Boolean
 
