@@ -44,9 +44,11 @@
 #define LOGW(...) (fprintf(stderr, "[emu] WARN " __VA_ARGS__), fputc('\n', stderr))
 #endif
 
-/* Internal blip buffer size in samples. One GBA frame at 48 kHz is ~804
- * samples; we drain after every frame so this only needs headroom. */
-#define AUDIO_BUFFER_SAMPLES 4096
+/* Internal blip buffer size in samples (mGBA's maximum). One GBA frame at
+ * 48 kHz is ~804 samples, and ten times that in x0.1 slow motion; we drain
+ * after every step so it only has to hold a single emulated frame. */
+#define AUDIO_BUFFER_SAMPLES 0x2000
+#define MIN_AUDIO_SPEED 0.1f
 
 static struct {
 	struct mCore* core;
@@ -455,11 +457,12 @@ void emu_set_audio_speed(float speed) {
 	if (!core || !emu.sampleRate) {
 		return;
 	}
-	if (speed < 1.0f) {
-		speed = 1.0f;
+	if (speed < MIN_AUDIO_SPEED) {
+		speed = MIN_AUDIO_SPEED;
 	}
-	/* blip_buf resamples to a lower rate; played back at the normal rate the
-	 * result is `speed` times faster, without aliasing. */
+	/* blip_buf resamples to a lower (fast forward) or higher (slow motion)
+	 * rate; played back at the normal rate the result is `speed` times
+	 * faster or slower, without aliasing. */
 	double rate = emu.sampleRate / (double) speed;
 	blip_set_rates(core->getAudioChannel(core, 0), core->frequency(core), rate);
 	blip_set_rates(core->getAudioChannel(core, 1), core->frequency(core), rate);

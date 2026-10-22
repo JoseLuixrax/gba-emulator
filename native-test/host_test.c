@@ -247,6 +247,15 @@ static void testRom(const char* romDir, const char* name, const char* outDir) {
 	double ffPerFrame = ffAudio / 120.0;
 	CHECK(ffPerFrame > perFrame / 4 - 10 && ffPerFrame < perFrame / 4 + 10, "%s: 4x audio gives %.1f samples/frame", name, ffPerFrame);
 
+	/* Slow motion x0.1: ten times the samples, all of them kept. */
+	emu_set_audio_speed(0.1f);
+	emu_discard_audio();
+	size_t slowAudio = 0;
+	runFrames(30, &slowAudio);
+	emu_set_audio_speed(1.0f);
+	double slowPerFrame = slowAudio / 30.0;
+	CHECK(slowPerFrame > perFrame * 10 - 40 && slowPerFrame < perFrame * 10 + 40, "%s: 0.1x audio gives %.1f samples/frame", name, slowPerFrame);
+
 	/* Fast forward path: frames whose audio is thrown away. */
 	for (int i = 0; i < 30; ++i) {
 		emu_run_frame();

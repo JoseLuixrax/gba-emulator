@@ -34,6 +34,8 @@
     <string name="load_state">Cargar estado</string>
     <string name="fast_forward_on">Avance rápido: activar</string>
     <string name="fast_forward_off">Avance rápido: desactivar</string>
+    <string name="slow_motion_on">Cámara lenta: activar</string>
+    <string name="slow_motion_off">Cámara lenta: desactivar</string>
     <string name="cheats">Trucos</string>
     <string name="screenshot">Captura de pantalla</string>
     <string name="solar_sensor">Sensor solar</string>
@@ -125,9 +127,9 @@
     <string name="pref_reset_layout_confirm">¿Restaurar la posición y el tamaño originales de los botones en pantalla?</string>
     <string name="layout_reset_done">Controles restablecidos</string>
     <string name="pref_cat_emulation">Emulación</string>
-    <string name="pref_ff_speed">Velocidad del avance rápido</string>
-    <string name="pref_ff_audio">Sonido en avance rápido</string>
-    <string name="pref_ff_audio_summary">La música suena acelerada, a la misma velocidad del avance rápido (no con «Sin límite»)</string>
+    <string name="pref_ff_speed">Velocidad del avance rápido / cámara lenta</string>
+    <string name="pref_ff_audio">Sonido en avance rápido / cámara lenta</string>
+    <string name="pref_ff_audio_summary">La música va a la misma velocidad que el juego, acelerada o lenta (no con «Sin límite»)</string>
     <string name="pref_rewind">Rebobinar</string>
     <string name="pref_rewind_summary">Añade un botón para rebobinar. Usa más memoria y batería.</string>
     <string name="pref_rewind_seconds">Duración del rebobinado</string>
@@ -180,6 +182,9 @@
     <string name="frameskip_1">1 fotograma</string>
     <string name="frameskip_2">2 fotogramas</string>
     <string name="frameskip_3">3 fotogramas</string>
+    <string name="slow_motion_01">0,1× (cámara lenta)</string>
+    <string name="slow_motion_025">0,25× (cámara lenta)</string>
+    <string name="slow_motion_05">0,5× (cámara lenta)</string>
     <string name="ff_unlimited">Sin límite</string>
     <string name="seconds_10">10 segundos</string>
     <string name="seconds_20">20 segundos</string>

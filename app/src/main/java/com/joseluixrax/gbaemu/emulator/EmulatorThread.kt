@@ -5,6 +5,7 @@ import android.os.SystemClock
 import android.util.Log
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.LockSupport
+import kotlin.math.roundToInt
 
 /**
  * Runs the emulator: one loop iteration = one emulated frame.
@@ -37,12 +38,15 @@ class EmulatorThread(
     @Volatile var keys = 0
     @Volatile var fastForward = false
 
-    /** Speed multiplier while fast forwarding; 0 means "as fast as possible". */
-    @Volatile var fastForwardSpeed = 4
+    /**
+     * Speed while the » button is on: above 1 fast forward, below 1 slow
+     * motion (0.5 = half speed), 0 means "as fast as possible".
+     */
+    @Volatile var fastForwardSpeed = 4f
     @Volatile var rewinding = false
     @Volatile var audioEnabled = true
 
-    /** Play sound while fast forwarding, sped up like the game. */
+    /** Play sound while fast forwarding / in slow motion, at the game's speed. */
     @Volatile var fastForwardAudio = true
 
     @Volatile private var paused = true
@@ -52,7 +56,7 @@ class EmulatorThread(
     private val audioBuffer = ShortArray(8192 * 2)
 
     /** Audio speed currently set in the core (1 = normal). */
-    private var coreAudioSpeed = 1
+    private var coreAudioSpeed = 1f
 
     private var fpsFrames = 0
     private var fpsStart = 0L
@@ -123,7 +127,7 @@ class EmulatorThread(
     }
 
     private fun stepNormal(nextFrameTime: Long): Long {
-        setCoreAudioSpeed(1)
+        setCoreAudioSpeed(1f)
         NativeBridge.setKeys(keys)
         NativeBridge.runFrame()
         publishFrame(1)
@@ -137,25 +141,41 @@ class EmulatorThread(
      */
     private fun stepFastForward(nextFrameTime: Long): Long {
         val speed = fastForwardSpeed
-        if (speed <= 0) {
+        if (speed <= 0f) {
             // Unlimited: as fast as the phone can go, there is no speed to play the music at.
-            setCoreAudioSpeed(1)
+            setCoreAudioSpeed(1f)
             NativeBridge.setKeys(keys)
             NativeBridge.runFrame()
             NativeBridge.discardAudio()
             publishFrame(1)
             return System.nanoTime()
         }
+        if (speed < 1f) return stepSlowMotion(speed, nextFrameTime)
+        val frames = speed.roundToInt()
         val withSound = audioEnabled && fastForwardAudio
-        setCoreAudioSpeed(if (withSound) speed else 1)
+        setCoreAudioSpeed(if (withSound) frames.toFloat() else 1f)
         NativeBridge.setKeys(keys)
-        repeat(speed) { NativeBridge.runFrame() }
-        publishFrame(speed)
+        repeat(frames) { NativeBridge.runFrame() }
+        publishFrame(frames)
         return playAudioOrPace(withSound, nextFrameTime)
     }
 
+    /**
+     * One emulated frame every 1/[speed] screen refreshes. With sound on, the
+     * core stretches the frame's audio by the same factor (lower and slower
+     * music), and writing it takes exactly as long as the frame should last.
+     */
+    private fun stepSlowMotion(speed: Float, nextFrameTime: Long): Long {
+        val withSound = audioEnabled && fastForwardAudio
+        setCoreAudioSpeed(if (withSound) speed else 1f)
+        NativeBridge.setKeys(keys)
+        NativeBridge.runFrame()
+        publishFrame(1)
+        return playAudioOrPace(withSound, nextFrameTime, (FRAME_NANOS / speed).toLong())
+    }
+
     /** Writes this step's audio (blocking = real-time pacing), or sleeps if there is none. */
-    private fun playAudioOrPace(withSound: Boolean, nextFrameTime: Long): Long {
+    private fun playAudioOrPace(withSound: Boolean, nextFrameTime: Long, period: Long = FRAME_NANOS): Long {
         if (withSound) {
             val frames = NativeBridge.readAudio(audioBuffer)
             if (frames > 0 && audio.write(audioBuffer, frames)) {
@@ -165,18 +185,18 @@ class EmulatorThread(
             NativeBridge.discardAudio()
         }
         // No audio output to wait on: keep time ourselves.
-        return pace(nextFrameTime)
+        return pace(nextFrameTime, period)
     }
 
-    private fun setCoreAudioSpeed(speed: Int) {
+    private fun setCoreAudioSpeed(speed: Float) {
         if (speed != coreAudioSpeed) {
-            NativeBridge.setAudioSpeed(speed.toFloat())
+            NativeBridge.setAudioSpeed(speed)
             coreAudioSpeed = speed
         }
     }
 
     private fun stepRewind(nextFrameTime: Long): Long {
-        setCoreAudioSpeed(1)
+        setCoreAudioSpeed(1f)
         NativeBridge.setKeys(0)
         if (NativeBridge.rewindStep()) {
             publishFrame(1)
@@ -209,10 +229,10 @@ class EmulatorThread(
     }
 
     /** Sleeps until the next frame is due; never tries to "catch up" a backlog. */
-    private fun pace(previous: Long): Long {
+    private fun pace(previous: Long, period: Long = FRAME_NANOS): Long {
         val now = System.nanoTime()
-        var target = previous + FRAME_NANOS
-        if (target < now - FRAME_NANOS * 3) target = now
+        var target = previous + period
+        if (target < now - period * 3) target = now
         val wait = target - now
         if (wait > 0) LockSupport.parkNanos(wait)
         return target

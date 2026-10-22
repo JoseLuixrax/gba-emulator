@@ -33,7 +33,8 @@ class Prefs(context: Context) {
     val dpadDiagonals: Boolean get() = raw.getBoolean(KEY_DPAD_DIAGONALS, true)
 
     // Emulation
-    val fastForwardSpeed: Int get() = raw.getString(KEY_FF_SPEED, "4")?.toIntOrNull() ?: 4
+    /** » button speed: 2-8 fast forward, 0.1-0.5 slow motion, 0 = unlimited. */
+    val fastForwardSpeed: Float get() = raw.getString(KEY_FF_SPEED, "4")?.toFloatOrNull() ?: 4f
     val fastForwardAudio: Boolean get() = raw.getBoolean(KEY_FF_AUDIO, true)
     val rewindEnabled: Boolean get() = raw.getBoolean(KEY_REWIND_ENABLED, false)
     val rewindSeconds: Int get() = raw.getString(KEY_REWIND_SECONDS, "20")?.toIntOrNull() ?: 20
