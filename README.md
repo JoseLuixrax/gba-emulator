@@ -20,7 +20,7 @@ El repositorio trae un workflow de **GitHub Actions** que compila el APK en la n
 2. Abajo, en **Artifacts**, descarga **`AdvanceBoy-apk`** (es un `.zip` con el `.apk` dentro).
 3. Pásalo al móvil e instálalo (Android te pedirá permitir *instalar apps desconocidas* para tu navegador / gestor de archivos).
 
-**Publicar una versión nueva:** sube `versionCode` y `versionName` en `app/build.gradle.kts` (por ejemplo a `2` y `"1.1.0"`), haz commit y crea un tag con el mismo número:
+**Publicar una versión nueva:** sube `versionCode` y `versionName` en `app/build.gradle.kts` (por ejemplo a `2` y `"1.1.0"`) y haz commit. Después, lo más fácil es ir a **Actions → Build APK → Run workflow**, marcar **release** y pulsar el botón verde: se crea el tag `v1.1.0` y la Release automáticamente. También puedes crear el tag a mano:
 
 ```bash
 git tag v1.1.0

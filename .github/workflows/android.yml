@@ -5,7 +5,14 @@ on:
     branches: ["**"]
     tags: ["v*"]
   pull_request:
+  # "Run workflow" button in the Actions tab. Tick "release" to publish
+  # a GitHub Release tagged v<versionName> without pushing a tag yourself.
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Publish a GitHub Release (tag v<versionName>)"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -76,6 +83,7 @@ jobs:
           # .../releases/latest/download/AdvanceBoy.apk always points to the newest one.
           cp app/build/outputs/apk/release/app-release.apk AdvanceBoy.apk
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -83,13 +91,16 @@ jobs:
           name: AdvanceBoy-apk
           path: ${{ steps.apk.outputs.name }}
 
-      # Pushing a tag like v1.0.0 publishes a GitHub Release with the APK,
-      # easy to download straight from the phone.
+      # Pushing a tag like v1.0.0 (or running the workflow with "release"
+      # ticked) publishes a GitHub Release with the APK, easy to download
+      # straight from the phone.
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release
         uses: softprops/action-gh-release@v2
         with:
-          name: AdvanceBoy ${{ github.ref_name }}
+          tag_name: ${{ steps.apk.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: AdvanceBoy ${{ steps.apk.outputs.tag }}
           files: AdvanceBoy.apk
           body: |
             Descarga **AdvanceBoy.apk** (abajo, en *Assets*) desde el móvil e instálalo.
