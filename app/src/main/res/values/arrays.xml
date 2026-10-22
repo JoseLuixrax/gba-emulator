@@ -58,6 +58,9 @@
     </string-array>
 
     <string-array name="ff_speed_entries">
+        <item>@string/slow_motion_01</item>
+        <item>@string/slow_motion_025</item>
+        <item>@string/slow_motion_05</item>
         <item>2×</item>
         <item>3×</item>
         <item>4×</item>
@@ -66,6 +69,9 @@
         <item>@string/ff_unlimited</item>
     </string-array>
     <string-array name="ff_speed_values" translatable="false">
+        <item>0.1</item>
+        <item>0.25</item>
+        <item>0.5</item>
         <item>2</item>
         <item>3</item>
         <item>4</item>

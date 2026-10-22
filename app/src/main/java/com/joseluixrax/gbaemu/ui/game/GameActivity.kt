@@ -465,7 +465,14 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         val entries = mutableListOf<Pair<String, () -> Unit>>()
         entries += getString(R.string.save_state) to { showStateDialog(saving = true) }
         entries += getString(R.string.load_state) to { showStateDialog(saving = false) }
-        entries += getString(if (fastForwardOn) R.string.fast_forward_off else R.string.fast_forward_on) to {
+        val slowMotion = prefs.fastForwardSpeed.let { it > 0f && it < 1f }
+        val speedLabel = when {
+            slowMotion && fastForwardOn -> R.string.slow_motion_off
+            slowMotion -> R.string.slow_motion_on
+            fastForwardOn -> R.string.fast_forward_off
+            else -> R.string.fast_forward_on
+        }
+        entries += getString(speedLabel) to {
             setFastForward(!fastForwardOn)
             closeMenu()
         }

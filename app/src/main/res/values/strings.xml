@@ -36,6 +36,8 @@
     <string name="load_state">Load state</string>
     <string name="fast_forward_on">Fast forward: turn on</string>
     <string name="fast_forward_off">Fast forward: turn off</string>
+    <string name="slow_motion_on">Slow motion: turn on</string>
+    <string name="slow_motion_off">Slow motion: turn off</string>
     <string name="cheats">Cheats</string>
     <string name="screenshot">Screenshot</string>
     <string name="solar_sensor">Solar sensor</string>
@@ -135,9 +137,9 @@
     <string name="pref_reset_layout_confirm">Restore the original position and size of the on-screen buttons?</string>
     <string name="layout_reset_done">Controls layout reset</string>
     <string name="pref_cat_emulation">Emulation</string>
-    <string name="pref_ff_speed">Fast forward speed</string>
-    <string name="pref_ff_audio">Sound while fast forwarding</string>
-    <string name="pref_ff_audio_summary">Music plays sped up, at the fast forward speed (not with Unlimited)</string>
+    <string name="pref_ff_speed">Fast forward / slow motion speed</string>
+    <string name="pref_ff_audio">Sound in fast forward / slow motion</string>
+    <string name="pref_ff_audio_summary">Music plays at the same speed as the game, faster or slower (not with Unlimited)</string>
     <string name="pref_rewind">Rewind</string>
     <string name="pref_rewind_summary">Adds a rewind button. Uses more memory and battery.</string>
     <string name="pref_rewind_seconds">Rewind length</string>
@@ -190,6 +192,9 @@
     <string name="frameskip_1">1 frame</string>
     <string name="frameskip_2">2 frames</string>
     <string name="frameskip_3">3 frames</string>
+    <string name="slow_motion_01">0.1× (slow motion)</string>
+    <string name="slow_motion_025">0.25× (slow motion)</string>
+    <string name="slow_motion_05">0.5× (slow motion)</string>
     <string name="ff_unlimited">Unlimited</string>
     <string name="seconds_10">10 seconds</string>
     <string name="seconds_20">20 seconds</string>

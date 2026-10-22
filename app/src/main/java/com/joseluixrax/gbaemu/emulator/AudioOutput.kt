@@ -15,11 +15,15 @@ import android.util.Log
  * which is exactly what keeps the game running at its real speed.
  */
 class AudioOutput(context: Context) {
-    /** The device's native rate, so Android doesn't have to resample. */
+    /**
+     * The device's native rate, so Android doesn't have to resample. Capped at
+     * 48 kHz: x0.1 slow motion produces ten times the samples per frame and
+     * the core can't buffer more than that.
+     */
     val sampleRate: Int = (context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
         .getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
         ?.toIntOrNull()
-        ?.takeIf { it in 22050..96000 }
+        ?.takeIf { it in 22050..48000 }
         ?: 48000
 
     private var track: AudioTrack? = null
