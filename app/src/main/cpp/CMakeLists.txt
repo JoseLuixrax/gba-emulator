@@ -1,7 +1,7 @@
 # Native part of the app: the mGBA core plus our small JNI bridge.
 #
 # mGBA's source is not stored in this repository. Gradle downloads it into
-# third_party/mgba (task :app:fetchMgba) and passes its location as MGBA_DIR.
+# third_party/mgba while configuring the project and passes it as MGBA_DIR.
 cmake_minimum_required(VERSION 3.18)
 project(gbaemu C)
 
@@ -10,7 +10,7 @@ if(NOT MGBA_DIR)
 endif()
 get_filename_component(MGBA_DIR "${MGBA_DIR}" ABSOLUTE)
 if(NOT EXISTS "${MGBA_DIR}/CMakeLists.txt")
-	message(FATAL_ERROR "mGBA source not found in ${MGBA_DIR}. Run ./gradlew :app:fetchMgba")
+	message(FATAL_ERROR "mGBA source not found in ${MGBA_DIR}. Run any Gradle build (e.g. ./gradlew help): app/build.gradle.kts downloads it.")
 endif()
 
 # The emulator must be fast even in Debug builds, otherwise games run at a
