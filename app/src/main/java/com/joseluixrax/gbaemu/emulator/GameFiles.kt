@@ -8,7 +8,7 @@ import java.io.File
  *
  * Files go to the app's external files dir (Android/data/<package>/files) so
  * they can be copied over USB. Layout:
- *   saves/<game>.sav            battery save, same format as My Boy / VBA / mGBA
+ *   saves/<game>.sav            battery save, raw format shared with VBA and mGBA
  *   states/<game>/slotN.state   save states (slot 0 = automatic)
  *   states/<game>/slotN.png     their thumbnails
  */

@@ -148,7 +148,7 @@ static uint8_t _readLuminance(struct GBALuminanceSource* lux) {
 #ifdef M_CORE_GBA
 /*
  * mGBA's save type detection can't tell 64 KiB from 128 KiB flash for games
- * missing from its database. Like VBA/My Boy, look for the save library
+ * missing from its database. Like VBA does, look for the save library
  * signature Nintendo's SDK embeds in the ROM. The database (applied on reset)
  * still wins for known games.
  */

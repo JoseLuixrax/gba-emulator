@@ -1,168 +1,119 @@
-# AdvanceBoy — emulador de GBA para Android (estilo My Boy!)
+# AdvanceBoy
 
-Emulador de **Game Boy Advance** (y de regalo **Game Boy / Game Boy Color**) para Android, con la misma experiencia que *My Boy!*:
-biblioteca de juegos, controles táctiles editables, estados guardados con miniatura, avance rápido, rebobinado, trucos, mandos físicos y sensores.
+Emulador de Game Boy Advance para Android. También abre juegos de Game Boy y Game Boy Color.
 
-El núcleo de emulación es **[mGBA](https://mgba.io) 0.10.5**, el emulador de GBA de código abierto más preciso que existe. Toda la app Android (interfaz, controles, audio, vídeo, gestión de partidas) está escrita en Kotlin sobre él.
+La emulación la hace [mGBA](https://mgba.io) (versión 0.10.5), que es de lo más preciso que hay. Todo lo demás es una app Android escrita en Kotlin: la lista de juegos, los controles táctiles, el audio, la imagen, las partidas y los ajustes.
 
----
+## Descargar
 
-## 1. Conseguir el APK sin instalar nada (recomendado)
+Desde el móvil, abre este enlace y se descarga siempre la última versión:
 
-**Descarga directa de la última versión (enlace fijo):**
 https://github.com/JoseLuixrax/gba-emulator/releases/latest/download/AdvanceBoy.apk
 
-Ábrelo desde el navegador del móvil, descarga el APK e instálalo. Ese enlace siempre apunta a la Release más reciente.
+Al abrir el archivo, Android te pedirá permiso para instalar apps de fuera de Play Store desde el navegador o el gestor de archivos. Lo das una vez y listo.
 
-El repositorio trae un workflow de **GitHub Actions** que compila el APK en la nube en cada `push`:
+Necesita Android 8.0 o superior. Las versiones nuevas se instalan encima de la anterior sin perder las partidas, pero no desinstales la app para actualizar, porque al desinstalar se borran.
 
-1. En GitHub, ve a la pestaña **Actions** → workflow **Build APK** → la última ejecución en verde.
-2. Abajo, en **Artifacts**, descarga **`AdvanceBoy-apk`** (es un `.zip` con el `.apk` dentro).
-3. Pásalo al móvil e instálalo (Android te pedirá permitir *instalar apps desconocidas* para tu navegador / gestor de archivos).
+## Qué tiene
 
-**Publicar una versión nueva:** sube `versionCode` y `versionName` en `app/build.gradle.kts` (por ejemplo a `2` y `"1.1.0"`) y haz commit. Después, lo más fácil es ir a **Actions → Build APK → Run workflow**, marcar **release** y pulsar el botón verde: se crea el tag `v1.1.0` y la Release automáticamente. También puedes crear el tag a mano:
+- Lista de juegos a partir de una carpeta del móvil (`.gba`, `.gb`, `.gbc` y `.zip`, también en subcarpetas), con los últimos que has jugado arriba.
+- 10 ranuras de estado con miniatura y fecha, más un guardado automático al salir para seguir donde lo dejaste.
+- Avance rápido de x2 a x8 y cámara lenta de x0,1 a x0,5. La música va a la misma velocidad que el juego.
+- Rebobinar (se activa en ajustes).
+- Trucos GameShark, Action Replay y CodeBreaker. En Game Boy, GameShark y Game Genie.
+- Controles táctiles que puedes mover y cambiar de tamaño, por separado en vertical y en horizontal.
+- Mandos Bluetooth o USB y teclado, con los botones configurables.
+- Filtros de imagen (nítido, pixelado, suavizado), líneas de escaneo, rejilla LCD y colores como los de la pantalla original de la GBA.
+- Reloj de los Pokémon de GBA (también en hacks), vibración, sensor de inclinación, giroscopio y sensor solar para los juegos que los usan.
+- BIOS opcional. Sin ella funciona igual con casi todos los juegos.
+
+## Cómo se usa
+
+La primera vez eliges la carpeta donde tienes las ROMs y te salen todos los juegos. Tocas uno y empieza.
+
+El menú del juego se abre con el botón ≡ de la pantalla o con el botón Atrás del móvil. Desde ahí guardas y cargas estados, activas el avance rápido, metes trucos, haces capturas, recolocas los controles o reinicias.
+
+El botón » activa el avance rápido o la cámara lenta, según la velocidad que tengas en Ajustes > Emulación. Si prefieres mantenerlo pulsado en vez de tocar para activar y desactivar, también se puede cambiar ahí.
+
+Si juegas con mando, los controles de la pantalla se esconden solos y vuelven en cuanto tocas la pantalla.
+
+Si mantienes pulsado un juego en la lista puedes importar o exportar su partida `.sav` (sirven las de VBA y mGBA), borrar sus estados o crear un acceso directo en la pantalla de inicio.
+
+## Dónde se guardan las partidas
+
+Todo va en la carpeta de la app:
+
+```
+Android/data/com.joseluixrax.gbaemu/files/
+  saves/<juego>.sav            partida del juego
+  states/<juego>/slotN.state   estados guardados (slot0 es el automático)
+  states/<juego>/slotN.png     sus miniaturas
+```
+
+Desde Android 11 los gestores de archivos no pueden entrar en `Android/data`, así que para llegar ahí desde el móvil tienes dos caminos: Ajustes > Archivos > Abrir carpeta de partidas, o la app Archivos de Android, donde aparece "AdvanceBoy" en el menú lateral. Desde el ordenador por USB se entra normal.
+
+Las capturas de pantalla van a la galería, en `Pictures/AdvanceBoy`.
+
+## BIOS
+
+No hace falta. mGBA trae una BIOS propia que va bien con casi todo. Si quieres usar la original (`gba_bios.bin`, 16 KB, sacada de tu consola), se instala desde Ajustes > BIOS.
+
+La app no incluye juegos ni BIOS.
+
+## Compilar
+
+Con [Android Studio](https://developer.android.com/studio): abres la carpeta del proyecto y le das a Run. La primera vez descarga solo el NDK, CMake y el código de mGBA (unos 15 MB, a `third_party/mgba`).
+
+Desde terminal:
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+./gradlew assembleDebug     # APK de pruebas en app/build/outputs/apk/debug/
+./gradlew assembleRelease   # APK optimizado en app/build/outputs/apk/release/
+./gradlew installDebug      # lo instala en el móvil conectado por USB
 ```
 
-GitHub Actions publicará la *Release* con `AdvanceBoy.apk` adjunto y el enlace fijo de arriba pasará a darte esa versión. Si el tag no coincide con `versionName`, la compilación falla a propósito para avisarte.
+La versión debug se instala como una app aparte (`com.joseluixrax.gbaemu.debug`), así puedo probar cambios sin tocar la que uso para jugar.
 
-> Todas las compilaciones se firman con la misma clave (`app/debug.keystore`), así que **cada APK nuevo se instala encima del anterior sin perder partidas**. Si algún día lo publicas en Google Play, crea tu propia clave privada (ver sección 8).
+Las dos se firman con la clave que hay en `app/debug.keystore`, que está en el repo a propósito para que cualquier APK nuevo se pueda instalar encima del anterior. Para subir la app a Google Play habría que crear una clave privada aparte.
 
-Requisitos del móvil: **Android 8.0 o superior** (ARM64, ARMv7 o x86_64).
+### GitHub Actions
 
----
+Cada push compila el APK y pasa los tests del núcleo. El APK queda en la pestaña Actions, dentro de la ejecución, en Artifacts.
 
-## 2. Cómo se usa
+Para sacar una versión nueva:
 
-| Acción | Cómo |
-|---|---|
-| Añadir juegos | Primera pantalla → **Elegir carpeta de ROMs** (busca `.gba`, `.gb`, `.gbc` y `.zip`, también en subcarpetas). O **Abrir un archivo ROM** suelto. |
-| Jugar | Toca el juego. Si saliste a mitad, continúa donde lo dejaste (estado automático). |
-| Menú del juego | Botón **≡** en pantalla o botón **Atrás** del móvil: guardar/cargar estado, avance rápido, trucos, captura, editar controles, ajustes, reiniciar, salir. |
-| Avance rápido / cámara lenta | Botón **»** (toque = activar/desactivar; configurable a "mantener"). Velocidad en Ajustes: cámara lenta 0,1× – 0,5×, avance rápido 2× – 8× o sin límite. La música va a la misma velocidad que el juego (se puede silenciar en Ajustes; con «sin límite» va sin sonido). |
-| Rebobinar | Actívalo en Ajustes → aparece el botón **«** (mantener pulsado). |
-| Estados guardados | 10 ranuras + guardado automático, con miniatura y fecha. Mantén pulsada una ranura para borrarla. |
-| Editar controles | Menú → *Editar posición de los controles*: arrastra cada botón, pellizca (o usa − / +) para cambiar tamaño. Se guarda por separado para vertical y horizontal. |
-| Mandos Bluetooth/USB | Funcionan solos (los controles táctiles se ocultan; toca la pantalla para que vuelvan). Reasigna botones en Ajustes → *Botones del mando*. |
-| Trucos | Menú → *Trucos* → *Añadir truco*. GameShark, Action Replay, CodeBreaker (GBA), GameShark y Game Genie (GB/GBC) o dirección:valor. Se detecta el tipo automáticamente. |
-| Partidas `.sav` | Mantén pulsado un juego en la biblioteca → *Importar / Exportar partida*. Compatibles con My Boy!, VBA y mGBA. |
-| Accesos directos | Mantén pulsado un juego → *Añadir a la pantalla de inicio*. |
+1. Subir `versionCode` y `versionName` en `app/build.gradle.kts`.
+2. Hacer commit y push.
+3. Ir a Actions > Build APK > Run workflow, marcar "release" y lanzarlo.
 
-### Funciones especiales de cartuchos
-- **Reloj en tiempo real** (Pokémon Rubí/Zafiro/Esmeralda y sus hacks): automático.
-- **Vibración** (Pokémon Pinball, Drill Dozer…): usa el motor del móvil.
-- **Inclinación** (Yoshi Topsy-Turvy, Kirby Tilt 'n' Tumble) y **giroscopio** (WarioWare: Twisted!): usan los sensores del móvil, solo en esos juegos.
-- **Sensor solar** (Boktai): menú del juego → *Sensor solar*.
+Eso crea el tag `v<versión>` y la release con `AdvanceBoy.apk`, y el enlace de descarga de arriba pasa a dar esa versión. También vale crear el tag a mano (`git tag v1.1.0 && git push origin v1.1.0`). Si el tag no coincide con `versionName`, la compilación falla a propósito.
 
-### Dónde se guardan las cosas
-En el almacenamiento de la app: `Android/data/com.joseluixrax.gbaemu/files/`
-
-```
-saves/<juego>.sav            partida del juego (la batería del cartucho)
-states/<juego>/slotN.state   estados guardados (slot0 = automático)
-states/<juego>/slotN.png     miniaturas
-```
-
-Para llegar a esa carpeta desde el móvil: **Ajustes → Archivos → Abrir carpeta de partidas**. Además aparece como **AdvanceBoy** en el menú lateral de la app *Archivos* (y en cualquier selector de archivos), así puedes copiar, compartir o sustituir los `.sav` sin ordenador. Desde Android 11 los gestores de archivos no pueden entrar en `Android/data`, por eso se hace así.
-
-Las capturas de pantalla van a la galería, carpeta `Pictures/AdvanceBoy`.
-
-### BIOS
-**No hace falta.** mGBA incluye una BIOS propia que funciona con prácticamente todos los juegos. Si quieres usar la BIOS original (`gba_bios.bin`, 16 KB, que tendrías que extraer tú de tu consola), instálala desde *Ajustes → BIOS*.
-
-> Esta app no incluye juegos ni BIOS. Usa copias de tus propios cartuchos.
-
----
-
-## 3. Compilar en tu ordenador (Android Studio)
-
-1. Instala **[Android Studio](https://developer.android.com/studio)** (trae el JDK y el SDK).
-2. *File → Open* → elige la carpeta del repositorio.
-3. Android Studio descargará solo lo que falte: Gradle, el **NDK** (compilador de C) y **CMake**. La primera vez el propio build descarga también el código de mGBA (unos 15 MB) a `third_party/mgba`.
-4. Conecta el móvil con *depuración USB* activada y pulsa ▶ **Run**.
-
-Por línea de comandos:
-
-```bash
-./gradlew assembleDebug        # APK de pruebas -> app/build/outputs/apk/debug/
-./gradlew assembleRelease      # APK optimizado -> app/build/outputs/apk/release/
-./gradlew installDebug         # lo instala en el móvil conectado
-```
-
-La versión *debug* se instala como una app aparte ("com.joseluixrax.gbaemu.debug"), así puedes probar cambios sin tocar la que usas para jugar.
-
----
-
-## 4. El proyecto explicado para alguien que viene de web
-
-| Android | Equivalente web |
-|---|---|
-| **Gradle** (`build.gradle.kts`) | `package.json` + bundler. Dependencias en `gradle/libs.versions.toml`. |
-| **Kotlin** | TypeScript, pero compilado y con tipos estrictos. |
-| **Activity** | Una "página" o ruta. Cada pantalla es una Activity. |
-| **Layouts XML** (`res/layout`) | Plantillas HTML. **ViewBinding** te da acceso tipado a los elementos (como `document.getElementById`, pero con tipos). |
-| **`res/values/strings.xml`** | Ficheros de traducción i18n (`values-es` = español). |
-| **SharedPreferences** | `localStorage`. |
-| **JNI + C (NDK)** | Como cargar un módulo WebAssembly: el código C de mGBA se compila a una librería nativa (`libgbaemu.so`) y Kotlin la llama. |
-| **GitHub Actions** | Tu CI/CD de siempre. |
-
-### Estructura
+## Cómo está organizado
 
 ```
 app/
-├── build.gradle.kts              configuración de la app + descarga de mGBA
-├── src/main/AndroidManifest.xml  pantallas y permisos (como un "routes" + metadatos)
-├── src/main/cpp/                 PARTE NATIVA (C)
-│   ├── CMakeLists.txt            compila mGBA + nuestro puente
-│   ├── emu_core.c/.h             envoltorio sobre mGBA (cargar ROM, frames, audio, estados, trucos…)
-│   └── jni_bridge.c              funciones que Kotlin puede llamar
-├── src/main/java/com/joseluixrax/gbaemu/
-│   ├── emulator/                 MOTOR
-│   │   ├── NativeBridge.kt       declaración de las funciones nativas
-│   │   ├── EmulatorThread.kt     bucle de emulación (60 fps, sincronizado con el audio)
-│   │   ├── AudioOutput.kt        sonido (AudioTrack)
-│   │   ├── FrameBuffer.kt        pasa cada fotograma al renderizador
-│   │   ├── RomLoader.kt          lee ROMs y .zip
-│   │   └── GameFiles.kt          rutas de partidas y estados
-│   ├── ui/library/               pantalla inicial (lista de juegos)
-│   ├── ui/game/                  pantalla de juego
-│   │   ├── GameActivity.kt       ciclo de vida, menú, estados, mandos
-│   │   ├── GameRenderer.kt       dibuja la imagen con OpenGL ES
-│   │   ├── Shaders.kt            filtros: nítido, pixelado, suave, scanlines, LCD, color GBA
-│   │   ├── VirtualPadView.kt     mando táctil + editor
-│   │   ├── PadLayout.kt          posiciones por defecto de los botones
-│   │   └── InputMapping.kt       mandos físicos
-│   ├── ui/cheats/                pantalla de trucos
-│   ├── ui/settings/              ajustes y asignación de botones
-│   └── Prefs.kt                  lectura de ajustes
-└── src/main/res/                 layouts, textos, iconos, ajustes (xml/preferences.xml)
-native-test/                      prueba el núcleo en Linux con ROMs de test (lo usa CI)
-.github/workflows/android.yml     CI: tests nativos + APK + Release
+  build.gradle.kts            configuración de la app y descarga de mGBA
+  src/main/cpp/               parte en C
+    CMakeLists.txt            compila mGBA y el puente
+    emu_core.c                capa sobre mGBA: cargar ROM, frames, audio, estados, trucos...
+    jni_bridge.c              lo que se llama desde Kotlin
+  src/main/java/com/joseluixrax/gbaemu/
+    emulator/                 bucle de emulación, audio, ROMs y rutas de archivos
+    ui/library/               pantalla de inicio con la lista de juegos
+    ui/game/                  pantalla de juego, OpenGL, filtros, controles y mandos
+    ui/cheats/                trucos
+    ui/settings/              ajustes y botones del mando
+    storage/                  la carpeta de partidas en la app Archivos
+  src/main/res/               layouts, textos (inglés y español), iconos y ajustes
+native-test/                  prueba el núcleo en Linux con ROMs de test
+.github/workflows/            compilación y releases
 ```
 
-### Cómo fluye un fotograma
-1. `EmulatorThread` llama a `NativeBridge.runFrame()` → mGBA emula 1/60 s de GBA.
-2. Copia la imagen (240×160) a `FrameBuffer` y pide a OpenGL que la pinte (`GameRenderer`, con el filtro elegido).
-3. Lee el audio de ese fotograma (~800 muestras a 48 kHz) y lo escribe en el altavoz. Esa escritura **bloquea** justo lo necesario, por eso el juego va exactamente a su velocidad real.
-4. Las teclas (pantalla táctil + mando) se juntan en una máscara de bits que se envía antes del siguiente fotograma.
+Cada frame funciona así: el hilo de emulación le pide a mGBA un frame, copia la imagen para que OpenGL la pinte con el filtro elegido y manda el audio de ese frame al altavoz. Escribir el audio bloquea justo lo que dura el frame, y eso es lo que hace que el juego vaya a su velocidad real (o a x4, o a x0,5, según lo que toque).
 
----
+## Tests del núcleo
 
-## 5. Recetas de personalización
-
-- **Cambiar el nombre de la app:** `app/src/main/res/values/strings.xml` → `app_name`.
-- **Cambiar colores:** `app/src/main/res/values/colors.xml`.
-- **Posición por defecto de los botones:** `PadLayout.defaults()` en `ui/game/PadLayout.kt`.
-- **Añadir un ajuste:** añade la entrada en `res/xml/preferences.xml`, su texto en `strings.xml` (+ `values-es`) y léelo en `Prefs.kt`.
-- **Nuevo filtro de pantalla:** añade un caso en `Shaders.kt` y su opción en `res/values/arrays.xml`.
-- **Versión:** `versionCode` / `versionName` en `app/build.gradle.kts` (sube `versionCode` en cada release).
-
----
-
-## 6. Pruebas del núcleo (Linux / macOS)
+Se pueden lanzar en Linux o macOS sin móvil:
 
 ```bash
 mkdir -p third_party
@@ -173,34 +124,19 @@ cmake --build build/native-test -j
 ./build/native-test/host_test native-test/roms build/native-test/out
 ```
 
-Ejecuta las ROMs de prueba de `native-test/roms` ([gba-tests de jsmolka](https://github.com/jsmolka/gba-tests), licencia MIT), comprueba vídeo, audio, estados, partidas Flash/SRAM, rebobinado y trucos, y guarda una captura PNG de cada una.
+Ejecuta las ROMs de `native-test/roms` ([gba-tests de jsmolka](https://github.com/jsmolka/gba-tests), licencia MIT), comprueba imagen, audio, estados, partidas Flash y SRAM, rebobinado, trucos y velocidades, y guarda una captura de cada una.
 
----
+## Pendiente
 
-## 7. Diferencias con My Boy! y siguientes pasos
-
-Ya incluido: biblioteca, estados con miniatura, autoguardado, avance rápido, rebobinado, trucos, filtros y shaders, corrección de color, mando táctil editable, mandos físicos con reasignación, vibración, sensores, BIOS opcional, GB/GBC, importar/exportar `.sav`, accesos directos.
-
-Pendiente / ideas:
-- **Cable link** (multijugador / intercambios Pokémon entre dos móviles por Wi-Fi). mGBA tiene la base (`GBASIOLockstep`), falta la parte de red.
-- Botones turbo y combinaciones (A+B).
-- Copia de seguridad en la nube de las partidas (Google Drive).
-- Skins / temas para el mando.
-
----
-
-## 8. Publicar en Google Play (opcional)
-
-1. Crea una clave privada: `keytool -genkeypair -v -keystore release.jks -alias advanceboy -keyalg RSA -keysize 2048 -validity 10000` (¡guárdala bien, sin ella no podrás actualizar la app!).
-2. Añade un `signingConfig` de release que lea la clave desde variables de entorno / *GitHub Secrets* y genera un `.aab` con `./gradlew bundleRelease`.
-3. Cambia el `applicationId` si quieres otro identificador, y revisa que el nombre no use marcas registradas.
-
----
+- Cable link por wifi para jugar a dobles o intercambiar Pokémon entre dos móviles.
+- Botones turbo y combinaciones tipo A+B.
+- Copia de las partidas en la nube.
+- Skins para los controles.
 
 ## Licencias
 
-- Núcleo **mGBA** © Vicki Pfau y colaboradores — [Mozilla Public License 2.0](https://github.com/mgba-emu/mgba/blob/master/LICENSE). Se descarga sin modificar desde su repositorio oficial.
-- **blip_buf** (LGPL 2.1) e **inih** (BSD), incluidos en mGBA.
-- ROMs de prueba de **jsmolka/gba-tests** (MIT), ver `native-test/roms/LICENSE-gba-tests`.
+- mGBA, de Vicki Pfau y colaboradores, con licencia [Mozilla Public License 2.0](https://github.com/mgba-emu/mgba/blob/master/LICENSE). Se descarga tal cual desde su repositorio oficial.
+- blip_buf (LGPL 2.1) e inih (BSD), que vienen con mGBA.
+- Las ROMs de prueba de jsmolka/gba-tests (MIT), ver `native-test/roms/LICENSE-gba-tests`.
 
-Game Boy Advance y Game Boy son marcas de Nintendo. Este proyecto no está afiliado a Nintendo.
+Game Boy Advance y Game Boy son marcas de Nintendo. Este proyecto no tiene nada que ver con Nintendo.

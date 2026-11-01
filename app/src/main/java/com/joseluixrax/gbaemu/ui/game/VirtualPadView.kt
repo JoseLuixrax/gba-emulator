@@ -23,7 +23,7 @@ import kotlin.math.min
 /**
  * The on-screen controller: draws the buttons and turns touches into GBA keys.
  *
- * - Multi-touch, with sliding between A/B/L/R like on My Boy!.
+ * - Multi-touch, with sliding between A/B/L/R.
  * - 8-way D-pad that keeps tracking the thumb even outside its circle.
  * - Edit mode: drag a control to move it, pinch (or +/-) to resize it.
  */

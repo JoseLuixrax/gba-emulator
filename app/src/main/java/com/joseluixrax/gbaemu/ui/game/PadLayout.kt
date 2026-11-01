@@ -68,7 +68,7 @@ object PadLayout {
         prefs.edit().remove(prefKey(true)).remove(prefKey(false)).apply()
     }
 
-    /** Default positions, modelled on the classic My Boy! layout. */
+    /** Default positions of the on-screen buttons. */
     fun defaults(width: Int, height: Int): MutableMap<PadElement, Placement> {
         val w = width.toFloat().coerceAtLeast(1f)
         val h = height.toFloat().coerceAtLeast(1f)
