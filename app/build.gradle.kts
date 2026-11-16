@@ -48,7 +48,7 @@ val melonds = CoreSource(
     name = "melonDS",
     version = "1.1",
     url = "https://github.com/melonDS-emu/melonDS/archive/refs/tags/1.1.tar.gz",
-    sha256 = "289b39eef4f6ecdad275af0ea1a314dc8c0ed2fb7209ff4ba138d9f4f72bf3f1",
+    sha256 = "61e339bcb18a68a17485973637d972ea628c5624d7e6b8adf6870f895d5e26fd",
     dir = rootDir.resolve("third_party/melonds"),
     marker = "1.1-1",
     // The core library only, without the Qt frontend.
