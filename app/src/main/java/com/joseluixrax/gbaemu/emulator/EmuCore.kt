@@ -53,7 +53,7 @@ object GbaCore : EmuCore {
     override val frameNanos = 16_742_706L
     override val rewindInterval = 2
 
-    // Only the ten GBA keys; the DS extras mean nothing here.
+    // Only the ten GBA keys; the DS extras (lid included) mean nothing here.
     override fun setInput(keys: Int, touch: Int) = NativeBridge.setKeys(keys and 0x3FF)
     override fun runFrame() = NativeBridge.runFrame()
     override fun copyFrame(buffer: ByteBuffer) = NativeBridge.copyFrame(buffer)

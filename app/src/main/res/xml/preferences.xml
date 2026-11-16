@@ -202,11 +202,32 @@
         app:title="@string/pref_cat_ds">
         <ListPreference
             app:defaultValue="stacked"
+            app:entries="@array/ds_portrait_entries"
+            app:entryValues="@array/ds_portrait_values"
+            app:iconSpaceReserved="false"
+            app:key="ds_portrait"
+            app:title="@string/pref_ds_portrait"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="stacked"
             app:entries="@array/ds_landscape_entries"
             app:entryValues="@array/ds_landscape_values"
             app:iconSpaceReserved="false"
             app:key="ds_landscape"
             app:title="@string/pref_ds_landscape"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="ds_swap"
+            app:summary="@string/pref_ds_swap_summary"
+            app:title="@string/swap_screens" />
+        <EditTextPreference
+            app:defaultValue=""
+            app:dialogMessage="@string/pref_ds_nickname_hint"
+            app:iconSpaceReserved="false"
+            app:key="ds_nickname"
+            app:title="@string/pref_ds_nickname"
             app:useSimpleSummaryProvider="true" />
         <SwitchPreferenceCompat
             app:defaultValue="true"

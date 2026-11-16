@@ -23,8 +23,10 @@ extern "C" {
  * plus X and Y. Active high. */
 #define NDS_KEY_X (1 << 10)
 #define NDS_KEY_Y (1 << 11)
-/* Not a DS key: the JNI layer uses this bit for "blow into the mic". */
+/* Not DS keys: the JNI layer uses these bits for "blow into the mic" and
+ * "lid closed". */
 #define NDS_KEY_MIC (1 << 12)
+#define NDS_KEY_LID (1 << 13)
 
 /* Firmware languages, as stored in the DS user settings. */
 enum NdsLanguage {
@@ -43,13 +45,16 @@ enum NdsLanguage {
  * Loads a ROM image already in memory (it is copied).
  * savePath: battery save file, read if it exists and written as the game saves.
  * dataDir:  folder melonDS may use for its own small files.
+ * nickname: the player's name in the firmware (UTF-8, up to 10 characters);
+ *           NULL or empty keeps the default one.
  * useJit:   recompiler (much faster on ARM64; ignored where unavailable).
  */
 bool nds_load(const void* rom, size_t romSize, const char* savePath, const char* dataDir,
-              unsigned sampleRate, int language, bool useJit);
+              unsigned sampleRate, int language, const char* nickname, bool useJit);
 /* Same, reading the ROM from an open file descriptor (left open). Big DS
  * ROMs don't fit in Java's heap, so Android passes the file this way. */
-bool nds_load_fd(int fd, const char* savePath, const char* dataDir, unsigned sampleRate, int language, bool useJit);
+bool nds_load_fd(int fd, const char* savePath, const char* dataDir, unsigned sampleRate, int language,
+                 const char* nickname, bool useJit);
 void nds_unload(void);
 bool nds_is_loaded(void);
 void nds_reset(void);
@@ -60,6 +65,9 @@ void nds_set_keys(uint32_t keys);
 void nds_touch(int x, int y, bool down);
 /* Feed a "blowing into the mic" sound while true. */
 void nds_set_mic_blow(bool blowing);
+/* Close or open the console's lid (most games go to sleep while closed). */
+void nds_set_lid(bool closed);
+bool nds_lid_closed(void);
 
 /* Copies both screens, top then bottom (256x384), as RGBA bytes with opaque
  * alpha. Returns bytes written. */

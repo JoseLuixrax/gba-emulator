@@ -85,6 +85,8 @@
     <string name="key_menu">Menu</string>
     <string name="key_quick_save">Quick save (slot 1)</string>
     <string name="key_quick_load">Quick load (slot 1)</string>
+    <string name="key_swap_screens">Swap screens (DS)</string>
+    <string name="key_lid">Close / open the lid (DS)</string>
 
     <!-- Key mapping -->
     <string name="key_mapping">Gamepad buttons</string>
@@ -162,8 +164,18 @@
     <string name="pref_gyro_summary">For WarioWare: Twisted! (percentage)</string>
     <string name="pref_cat_ds">Nintendo DS</string>
     <string name="pref_ds_landscape">Screens in landscape</string>
+    <string name="pref_ds_portrait">Screens in portrait</string>
     <string name="ds_landscape_stacked">One above the other</string>
     <string name="ds_landscape_side">Side by side</string>
+    <string name="ds_layout_focus">One big, one small</string>
+    <string name="ds_layout_single">Only one screen</string>
+    <string name="swap_screens">Swap screens</string>
+    <string name="pref_ds_swap_summary">The bottom screen goes first: on top, on the left, the big one or the only one. Also from the game menu or the ↕ button.</string>
+    <string name="pref_ds_nickname">Your name on the DS</string>
+    <string name="pref_ds_nickname_hint">Up to 10 letters. Some games show it. Used the next time you open a game.</string>
+    <string name="lid_close">Close the lid</string>
+    <string name="lid_open">Open the lid</string>
+    <string name="lid_closed_hint">Lid closed. Most games sleep until you open it again from the menu.</string>
     <string name="pref_ds_jit">Fast mode (JIT)</string>
     <string name="pref_ds_jit_summary">Much faster. Turn it off only if a DS game closes by itself.</string>
     <string name="pref_cat_files">Files</string>

@@ -44,9 +44,14 @@ Si mantienes pulsado un juego en la lista puedes importar o exportar su partida 
 
 Se abren igual que los de GBA, desde la misma lista. No hace falta BIOS ni firmware de una consola: melonDS trae los suyos y arranca el juego directamente.
 
-- En vertical las dos pantallas van arriba y los controles debajo. En horizontal van en el centro, una encima de la otra, y los controles a los lados. Si prefieres verlas una al lado de la otra, se cambia en Ajustes > Nintendo DS.
+- En vertical las dos pantallas van arriba y los controles debajo. En horizontal van en el centro, una encima de la otra, y los controles a los lados. En Ajustes > Nintendo DS hay más formas de verlas:
+  - En horizontal: una al lado de la otra, una grande y otra pequeña, o solo una.
+  - En vertical: las dos o solo una.
+- El botón ↕ intercambia las pantallas: la de abajo pasa a ser la principal (arriba, a la izquierda, la grande o la única que se ve). Va muy bien con "una grande y otra pequeña" en los juegos que se juegan casi todo con la táctil. También está en el menú del juego y se puede poner en un botón del mando, y la app se acuerda de cómo lo dejaste.
 - La pantalla de abajo es táctil: tocas y arrastras con el dedo como si fuera el lápiz. Los botones que estén encima de ella tienen preferencia, y si juegas con mando y los controles están escondidos, toda la pantalla responde al dedo.
 - El botón MIC hace como si soplaras al micrófono, que es lo que piden algunos juegos.
+- Desde el menú del juego puedes cerrar y abrir la tapa de la consola. La mayoría de juegos se ponen en reposo, pero algunos lo usan en la propia partida. También se puede asignar a un botón del mando.
+- En Ajustes > Nintendo DS puedes poner tu nombre (hasta 10 letras), el que tendría la consola. Algunos juegos lo enseñan, y se aplica la próxima vez que abras un juego.
 - El idioma de los juegos es el del móvil (español, inglés, francés, alemán, italiano o japonés).
 - La partida se guarda sola en cuanto el juego termina de escribirla, y también al salir o al cambiar de app.
 - El avance rápido y la cámara lenta funcionan igual que en GBA, con la música a la misma velocidad.
@@ -151,7 +156,7 @@ El segundo arranca una ROM de DS casera hecha solo para esto (el código está e
 
 ## Pendiente
 
-- DS: más disposiciones de pantalla (una grande y otra pequeña, intercambiarlas).
+- DS: usar el micrófono de verdad, para los juegos que piden hablar o soplar con más control.
 - Cable link por wifi para jugar a dobles o intercambiar Pokémon entre dos móviles.
 - Botones turbo y combinaciones tipo A+B.
 - Copia de las partidas en la nube.

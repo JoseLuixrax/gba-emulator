@@ -28,6 +28,8 @@ enum class InputAction(val id: String, @StringRes val label: Int, val key: Int =
     MENU("menu", Res.string.key_menu),
     QUICK_SAVE("quick_save", Res.string.key_quick_save),
     QUICK_LOAD("quick_load", Res.string.key_quick_load),
+    SWAP_SCREENS("swap_screens", Res.string.key_swap_screens),
+    LID("lid", Res.string.key_lid),
 }
 
 /**

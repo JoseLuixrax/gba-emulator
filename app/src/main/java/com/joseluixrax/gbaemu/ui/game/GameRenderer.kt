@@ -32,7 +32,6 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
         val aspect: Aspect = Aspect.KEEP,
         /** The frame is a DS frame: two screens to place separately. */
         val ds: Boolean = false,
-        val dsLandscape: DsScreens.Landscape = DsScreens.Landscape.STACKED,
     )
 
     @Volatile private var settings = Settings()
@@ -40,6 +39,9 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
 
     /** Pixels reserved at the top in portrait (notch). */
     @Volatile var topInset = 0
+
+    /** Where the DS screens go. Changing it needs no shader rebuild, just a redraw. */
+    @Volatile var dsConfig = DsScreens.Config()
 
     private var program = 0
     private var texture = 0
@@ -116,9 +118,7 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
 
         val s = settings
         if (s.ds && textureHeight == textureWidth * 3 / 2) {
-            val layout = DsScreens.compute(
-                surfaceWidth, surfaceHeight, topInset, s.dsLandscape, s.aspect == Aspect.INTEGER,
-            )
+            val layout = DsScreens.compute(surfaceWidth, surfaceHeight, topInset, dsConfig)
             drawQuad(layout.top, topScreenQuad, 0f, 0.5f)
             drawQuad(layout.bottom, bottomScreenQuad, 0.5f, 1f)
         } else {

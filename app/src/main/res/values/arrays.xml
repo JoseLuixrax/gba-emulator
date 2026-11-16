@@ -44,13 +44,26 @@
         <item>landscape</item>
     </string-array>
 
+    <string-array name="ds_portrait_entries">
+        <item>@string/ds_landscape_stacked</item>
+        <item>@string/ds_layout_single</item>
+    </string-array>
+    <string-array name="ds_portrait_values" translatable="false">
+        <item>stacked</item>
+        <item>single</item>
+    </string-array>
+
     <string-array name="ds_landscape_entries">
         <item>@string/ds_landscape_stacked</item>
         <item>@string/ds_landscape_side</item>
+        <item>@string/ds_layout_focus</item>
+        <item>@string/ds_layout_single</item>
     </string-array>
     <string-array name="ds_landscape_values" translatable="false">
         <item>stacked</item>
         <item>side</item>
+        <item>focus</item>
+        <item>single</item>
     </string-array>
 
     <string-array name="frameskip_entries">

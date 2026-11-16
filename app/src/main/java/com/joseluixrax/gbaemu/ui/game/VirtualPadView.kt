@@ -44,6 +44,9 @@ class VirtualPadView @JvmOverloads constructor(
         /** DS touch screen, in DS pixels (0-255, 0-191). */
         fun onScreenTouch(x: Int, y: Int) {}
         fun onScreenRelease() {}
+
+        /** DS: the swap screens button. */
+        fun onSwapScreens() {}
     }
 
     var listener: Listener? = null
@@ -87,7 +90,7 @@ class VirtualPadView @JvmOverloads constructor(
             }
         }
 
-    /** DS game: X, Y and mic buttons, its own layouts, touch screen. */
+    /** DS game: X, Y, mic and swap buttons, its own layouts, touch screen. */
     var dsMode = false
         set(value) {
             if (field != value) {
@@ -209,7 +212,7 @@ class VirtualPadView @JvmOverloads constructor(
 
     private fun isShown(element: PadElement) = when (element) {
         PadElement.REWIND -> showRewind && !dsMode
-        PadElement.X, PadElement.Y, PadElement.MIC -> dsMode
+        PadElement.X, PadElement.Y, PadElement.MIC, PadElement.SWAP -> dsMode
         else -> true
     }
 
@@ -395,6 +398,10 @@ class VirtualPadView @JvmOverloads constructor(
                 if (hapticsEnabled) haptics.tick()
                 listener?.onRewindButton(true)
             }
+            PadElement.SWAP -> {
+                if (hapticsEnabled) haptics.tick()
+                listener?.onSwapScreens()
+            }
             else -> Unit
         }
     }
@@ -412,7 +419,7 @@ class VirtualPadView @JvmOverloads constructor(
             PadElement.DPAD -> {
                 touch.keys = dpadKeys(rects[PadElement.DPAD] ?: return, x, y)
             }
-            PadElement.MENU, PadElement.FAST_FORWARD, PadElement.REWIND -> touch.keys = 0
+            PadElement.MENU, PadElement.FAST_FORWARD, PadElement.REWIND, PadElement.SWAP -> touch.keys = 0
             PadElement.START, PadElement.SELECT, PadElement.MIC -> touch.keys = keyFor(touch.element)
             else -> {
                 // Face and shoulder buttons: the finger may slide to a neighbour.
@@ -440,7 +447,7 @@ class VirtualPadView @JvmOverloads constructor(
         for (t in touches.values) {
             keys = keys or t.keys
             val e = t.element ?: continue
-            if (t.keys != 0 || e == PadElement.MENU || e == PadElement.FAST_FORWARD || e == PadElement.REWIND) {
+            if (t.keys != 0 || e in TAP_BUTTONS) {
                 nowPressed.add(e)
             }
         }
@@ -555,5 +562,8 @@ class VirtualPadView @JvmOverloads constructor(
 
     private companion object {
         val SLIDABLE = listOf(PadElement.A, PadElement.B, PadElement.X, PadElement.Y, PadElement.L, PadElement.R)
+
+        // Buttons that do something in the app rather than press a key.
+        val TAP_BUTTONS = setOf(PadElement.MENU, PadElement.FAST_FORWARD, PadElement.REWIND, PadElement.SWAP)
     }
 }

@@ -111,8 +111,8 @@ android {
         applicationId = "com.joseluixrax.gbaemu"
         minSdk = 26 // Android 8.0: mGBA needs strtof_l from bionic (API 26+)
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.2.0"
+        versionCode = 7
+        versionName = "1.3.0"
 
         ndk {
             // Real phones (arm64 / older arm) + x86_64 for emulators and Chromebooks.

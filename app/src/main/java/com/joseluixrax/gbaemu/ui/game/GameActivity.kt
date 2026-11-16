@@ -33,6 +33,7 @@ import com.joseluixrax.gbaemu.cheats.Cheat
 import com.joseluixrax.gbaemu.cheats.CheatStore
 import com.joseluixrax.gbaemu.databinding.ActivityGameBinding
 import com.joseluixrax.gbaemu.emulator.AudioOutput
+import com.joseluixrax.gbaemu.emulator.DsKeys
 import com.joseluixrax.gbaemu.emulator.EmuCore
 import com.joseluixrax.gbaemu.emulator.EmulatorThread
 import com.joseluixrax.gbaemu.emulator.FrameBuffer
@@ -85,8 +86,10 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
 
     /** Nintendo DS game (melonDS) instead of GBA/GB/GBC (mGBA). */
     private var isDs = false
-    private var dsLandscape = DsScreens.Landscape.STACKED
-    private var integerScale = false
+    private var dsConfig = DsScreens.Config()
+
+    /** DS lid closed from the menu or a mapped button (sent to the core as a key bit). */
+    private var lidClosed = false
     private var solarLevel = 5
     private var activityResumed = false
 
@@ -268,7 +271,9 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         val language = NdsBridge.languageFor(Locale.getDefault())
         return try {
             rom.open().use { fd ->
-                NdsBridge.loadRomFd(fd.fd, files.saveFile.path, dataDir.path, audio.sampleRate, language, prefs.dsJit)
+                NdsBridge.loadRomFd(
+                    fd.fd, files.saveFile.path, dataDir.path, audio.sampleRate, language, prefs.dsNickname, prefs.dsJit,
+                )
             }
         } catch (e: Exception) {
             false
@@ -312,8 +317,13 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
 
     /** Reads settings that may have changed while we were in the settings screen. */
     private fun applySettings() {
-        dsLandscape = DsScreens.landscapeFrom(prefs.dsLandscape)
-        integerScale = prefs.aspectMode == "integer"
+        dsConfig = DsScreens.Config(
+            portrait = DsScreens.portraitFrom(prefs.dsPortrait),
+            landscape = DsScreens.landscapeFrom(prefs.dsLandscape),
+            swapped = prefs.dsSwap,
+            integerScale = prefs.aspectMode == "integer",
+        )
+        renderer.dsConfig = dsConfig
         renderer.updateSettings(
             GameRenderer.Settings(
                 filter = Shaders.filterFrom(prefs.videoFilter),
@@ -325,7 +335,6 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
                     else -> GameRenderer.Aspect.KEEP
                 },
                 ds = isDs,
-                dsLandscape = dsLandscape,
             ),
         )
         binding.gameView.requestRender()
@@ -446,11 +455,30 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     private fun dsBottomScreen(): RectF? {
         val pad = binding.pad
         if (pad.width == 0 || pad.height == 0) return null
-        return DsScreens.compute(pad.width, pad.height, renderer.topInset, dsLandscape, integerScale).bottom
+        return DsScreens.compute(pad.width, pad.height, renderer.topInset, dsConfig).bottom
+    }
+
+    override fun onSwapScreens() = toggleSwap()
+
+    /** DS: the bottom screen goes first, or back. Remembered for next time. */
+    private fun toggleSwap() {
+        if (!isDs) return
+        prefs.dsSwap = !dsConfig.swapped
+        dsConfig = dsConfig.copy(swapped = prefs.dsSwap)
+        renderer.dsConfig = dsConfig
+        binding.gameView.requestRender()
+    }
+
+    private fun toggleLid() {
+        if (!isDs) return
+        lidClosed = !lidClosed
+        pushKeys()
+        if (lidClosed) toast(getString(R.string.lid_closed_hint))
     }
 
     private fun pushKeys() {
-        emulator.keys = touchKeys or physicalKeys or stickKeys
+        val lid = if (lidClosed) DsKeys.LID else 0
+        emulator.keys = touchKeys or physicalKeys or stickKeys or lid
     }
 
     private fun setFastForward(on: Boolean) {
@@ -529,6 +557,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             InputAction.MENU -> if (down) openMenu()
             InputAction.QUICK_SAVE -> if (down) saveState(QUICK_SLOT)
             InputAction.QUICK_LOAD -> if (down) loadState(QUICK_SLOT)
+            InputAction.SWAP_SCREENS -> if (down) toggleSwap()
+            InputAction.LID -> if (down) toggleLid()
             else -> Unit
         }
     }
@@ -564,6 +594,16 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         }
         if (!isDs && hardware and NativeBridge.HW_LIGHT_SENSOR != 0) {
             entries += getString(R.string.solar_sensor) to { showSolarDialog() }
+        }
+        if (isDs) {
+            entries += getString(R.string.swap_screens) to {
+                toggleSwap()
+                closeMenu()
+            }
+            entries += getString(if (lidClosed) R.string.lid_open else R.string.lid_close) to {
+                toggleLid()
+                closeMenu()
+            }
         }
         entries += getString(R.string.edit_controls) to {
             closeMenu()

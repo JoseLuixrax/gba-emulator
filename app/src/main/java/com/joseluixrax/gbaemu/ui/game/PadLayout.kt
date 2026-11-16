@@ -13,6 +13,7 @@ enum class PadElement(val id: String, val label: String, val shape: Shape, val b
     X("x", "X", Shape.CIRCLE, 0.17f, 0.17f),
     Y("y", "Y", Shape.CIRCLE, 0.17f, 0.17f),
     MIC("mic", "MIC", Shape.PILL, 0.13f, 0.065f),
+    SWAP("swap", "↕", Shape.CIRCLE, 0.10f, 0.10f),
     L("l", "L", Shape.PILL, 0.23f, 0.09f),
     R("r", "R", Shape.PILL, 0.23f, 0.09f),
     SELECT("select", "SELECT", Shape.PILL, 0.17f, 0.065f),
@@ -108,6 +109,7 @@ object PadLayout {
                 put(PadElement.MENU, 0.10f * u, 0.27f * u)
                 put(PadElement.MIC, 0.30f * u, 0.27f * u)
                 put(PadElement.FAST_FORWARD, w - 0.10f * u, 0.27f * u)
+                put(PadElement.SWAP, w - 0.30f * u, 0.27f * u)
             } else {
                 // Portrait: both screens on top (see DsScreens), controls in the space left.
                 val u = w
@@ -120,6 +122,7 @@ object PadLayout {
                 put(PadElement.FAST_FORWARD, w / 2f + 0.13f * u, h - 0.585f * u)
                 put(PadElement.SELECT, w / 2f - 0.10f * u, h - 0.045f * u)
                 put(PadElement.START, w / 2f + 0.10f * u, h - 0.045f * u)
+                put(PadElement.SWAP, w - 0.07f * u, h - 0.06f * u)
             }
             return map
         }

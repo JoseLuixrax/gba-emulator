@@ -3,10 +3,12 @@ package com.joseluixrax.gbaemu.ui.settings
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputFilter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -65,6 +67,11 @@ class SettingsActivity : AppCompatActivity() {
             findPreference<Preference>(Prefs.KEY_BIOS)?.setOnPreferenceClickListener {
                 showBiosOptions()
                 true
+            }
+            findPreference<EditTextPreference>(Prefs.KEY_DS_NICKNAME)?.setOnBindEditTextListener {
+                // The DS firmware has room for 10 characters.
+                it.filters = arrayOf(InputFilter.LengthFilter(10))
+                it.isSingleLine = true
             }
             findPreference<Preference>(Prefs.KEY_ABOUT)?.summary =
                 getString(R.string.pref_about_summary, BuildConfig.VERSION_NAME)

@@ -46,8 +46,19 @@ class Prefs(context: Context) {
     val gyroSensitivity: Int get() = raw.getInt(KEY_GYRO_SENSITIVITY, 100)
 
     // Nintendo DS
-    /** "stacked" (one above the other) or "side" (side by side), when the phone is sideways. */
+    /** "stacked" or "single" (see DsScreens.portraitFrom). */
+    val dsPortrait: String get() = raw.getString(KEY_DS_PORTRAIT, "stacked") ?: "stacked"
+
+    /** "stacked", "side", "focus" or "single" (see DsScreens.landscapeFrom). */
     val dsLandscape: String get() = raw.getString(KEY_DS_LANDSCAPE, "stacked") ?: "stacked"
+
+    /** The bottom screen goes first. Also toggled from the game. */
+    var dsSwap: Boolean
+        get() = raw.getBoolean(KEY_DS_SWAP, false)
+        set(value) = raw.edit().putBoolean(KEY_DS_SWAP, value).apply()
+
+    /** Player name for the DS firmware; empty keeps melonDS's default. */
+    val dsNickname: String get() = raw.getString(KEY_DS_NICKNAME, "")?.trim().orEmpty()
     val dsJit: Boolean get() = raw.getBoolean(KEY_DS_JIT, true)
 
     // Library
@@ -84,7 +95,10 @@ class Prefs(context: Context) {
         const val KEY_BIOS = "bios_file"
         const val KEY_SKIP_BIOS = "skip_bios"
         const val KEY_GYRO_SENSITIVITY = "gyro_sensitivity"
+        const val KEY_DS_PORTRAIT = "ds_portrait"
         const val KEY_DS_LANDSCAPE = "ds_landscape"
+        const val KEY_DS_SWAP = "ds_swap"
+        const val KEY_DS_NICKNAME = "ds_nickname"
         const val KEY_DS_JIT = "ds_jit"
         const val KEY_ABOUT = "about"
         const val KEY_OPEN_SAVES = "open_saves_folder"

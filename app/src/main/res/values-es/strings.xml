@@ -73,6 +73,8 @@
     <string name="key_menu">Menú</string>
     <string name="key_quick_save">Guardado rápido (ranura 1)</string>
     <string name="key_quick_load">Carga rápida (ranura 1)</string>
+    <string name="key_swap_screens">Intercambiar pantallas (DS)</string>
+    <string name="key_lid">Cerrar / abrir la tapa (DS)</string>
 
     <!-- Mapeo de botones -->
     <string name="key_mapping">Botones del mando</string>
@@ -149,8 +151,18 @@
     <string name="pref_gyro_summary">Para WarioWare: Twisted! (porcentaje)</string>
     <string name="pref_cat_ds">Nintendo DS</string>
     <string name="pref_ds_landscape">Pantallas en horizontal</string>
+    <string name="pref_ds_portrait">Pantallas en vertical</string>
     <string name="ds_landscape_stacked">Una encima de la otra</string>
     <string name="ds_landscape_side">Una al lado de la otra</string>
+    <string name="ds_layout_focus">Una grande y otra pequeña</string>
+    <string name="ds_layout_single">Solo una pantalla</string>
+    <string name="swap_screens">Intercambiar pantallas</string>
+    <string name="pref_ds_swap_summary">La de abajo pasa a ser la principal: arriba, a la izquierda, la grande o la única. También desde el menú del juego o con el botón ↕.</string>
+    <string name="pref_ds_nickname">Tu nombre en la DS</string>
+    <string name="pref_ds_nickname_hint">Hasta 10 letras. Algunos juegos lo muestran. Se usa la próxima vez que abras un juego.</string>
+    <string name="lid_close">Cerrar la tapa</string>
+    <string name="lid_open">Abrir la tapa</string>
+    <string name="lid_closed_hint">Tapa cerrada. Casi todos los juegos se quedan en reposo hasta que la abras desde el menú.</string>
     <string name="pref_ds_jit">Modo rápido (JIT)</string>
     <string name="pref_ds_jit_summary">Mucho más rápido. Desactívalo solo si un juego de DS se cierra solo.</string>
     <string name="pref_cat_files">Archivos</string>

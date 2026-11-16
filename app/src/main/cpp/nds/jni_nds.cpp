@@ -23,27 +23,13 @@ static std::string toStdString(JNIEnv* env, jstring str) {
 
 extern "C" {
 
-JNIEXPORT jboolean JNICALL JNI_FN(loadRom)(JNIEnv* env, jobject, jbyteArray rom, jstring savePath, jstring dataDir,
-                                           jint sampleRate, jint language, jboolean useJit) {
-	jsize size = env->GetArrayLength(rom);
-	jbyte* data = env->GetByteArrayElements(rom, nullptr);
-	if (!data) {
-		return JNI_FALSE;
-	}
-	std::string save = toStdString(env, savePath);
-	std::string dir = toStdString(env, dataDir);
-	bool ok = nds_load(data, (size_t) size, save.empty() ? nullptr : save.c_str(), dir.empty() ? nullptr : dir.c_str(),
-	                   (unsigned) sampleRate, language, useJit);
-	env->ReleaseByteArrayElements(rom, data, JNI_ABORT);
-	return ok ? JNI_TRUE : JNI_FALSE;
-}
-
 JNIEXPORT jboolean JNICALL JNI_FN(loadRomFd)(JNIEnv* env, jobject, jint fd, jstring savePath, jstring dataDir,
-                                             jint sampleRate, jint language, jboolean useJit) {
+                                             jint sampleRate, jint language, jstring nickname, jboolean useJit) {
 	std::string save = toStdString(env, savePath);
 	std::string dir = toStdString(env, dataDir);
+	std::string name = toStdString(env, nickname);
 	bool ok = nds_load_fd(fd, save.empty() ? nullptr : save.c_str(), dir.empty() ? nullptr : dir.c_str(),
-	                      (unsigned) sampleRate, language, useJit);
+	                      (unsigned) sampleRate, language, name.c_str(), useJit);
 	return ok ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -59,10 +45,11 @@ JNIEXPORT void JNICALL JNI_FN(runFrame)(JNIEnv*, jobject) {
 	nds_run_frame();
 }
 
-// keys: GBA bits + X/Y + the mic bit. touch: (x << 16) | y, or -1 for none.
+// keys: GBA bits + X/Y + the mic and lid bits. touch: (x << 16) | y, or -1 for none.
 JNIEXPORT void JNICALL JNI_FN(setInput)(JNIEnv*, jobject, jint keys, jint touch) {
 	nds_set_keys((uint32_t) keys);
 	nds_set_mic_blow((keys & NDS_KEY_MIC) != 0);
+	nds_set_lid((keys & NDS_KEY_LID) != 0);
 	if (touch >= 0) {
 		nds_touch((touch >> 16) & 0xFFFF, touch & 0xFFFF, true);
 	} else {

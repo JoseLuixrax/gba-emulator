@@ -28,6 +28,8 @@ struct NdsSession {
 	std::atomic<int> touchY{0};
 	std::atomic<bool> touching{false};
 	std::atomic<bool> micBlow{false};
+	std::atomic<bool> lidClosed{false};
+	bool lidApplied = false; // what melonDS was last told, set on the emulator thread
 	uint32_t noiseState = 0x1234567;
 
 	unsigned sampleRate = 48000;

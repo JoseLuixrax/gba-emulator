@@ -195,10 +195,16 @@ int main(int argc, char** argv) {
 
 	std::vector<uint8_t> rom = readAll(argv[1]);
 	CHECK(!rom.empty(), "cannot read %s", argv[1]);
-	CHECK(!nds_load("not a rom", 9, nullptr, outDir, 48000, NDS_LANG_SPANISH, true), "garbage accepted as a ROM");
-	bool loaded = nds_load(rom.data(), rom.size(), savePath.c_str(), outDir, 48000, NDS_LANG_SPANISH, true);
+	CHECK(!nds_load("not a rom", 9, nullptr, outDir, 48000, NDS_LANG_SPANISH, nullptr, true), "garbage accepted as a ROM");
+	bool loaded = nds_load(rom.data(), rom.size(), savePath.c_str(), outDir, 48000, NDS_LANG_SPANISH, "José", true);
 	CHECK(loaded, "nds_load failed");
 	if (!loaded) return 1;
+
+	// Firmware: language and the player's name (UTF-8 in, UTF-16 in the firmware).
+	const auto& user = gNdsSession->nds->GetFirmware().GetEffectiveUserData();
+	CHECK((user.Settings & 7) == NDS_LANG_SPANISH, "firmware language is %d", user.Settings & 7);
+	CHECK(user.NameLength == 4 && user.Nickname[0] == u'J' && user.Nickname[3] == u'\u00e9',
+	      "firmware nickname has %d characters", user.NameLength);
 
 	char title[32];
 	nds_game_title(title, sizeof(title));
@@ -229,6 +235,18 @@ int main(int argc, char** argv) {
 	runAndCountAudio(2);
 	nds_set_mic_blow(false);
 
+	// The lid: closed, still closed after a reset, open again.
+	CHECK(!nds_lid_closed(), "lid closed from the start");
+	nds_set_lid(true);
+	runAndCountAudio(2);
+	CHECK(nds_lid_closed(), "lid didn't close");
+	nds_reset();
+	runAndCountAudio(1);
+	CHECK(nds_lid_closed(), "lid opened by a reset while it should stay closed");
+	nds_set_lid(false);
+	runAndCountAudio(2);
+	CHECK(!nds_lid_closed(), "lid didn't open");
+
 	nds_set_audio_speed(4.0f);
 	double ff = runAndCountAudio(60);
 	CHECK(ff > perFrame / 4 - 10 && ff < perFrame / 4 + 10, "4x audio %.1f samples/frame", ff);
@@ -257,7 +275,7 @@ int main(int argc, char** argv) {
 
 	// The Android app passes big ROMs as a file descriptor: a real file...
 	int fd = open(argv[1], O_RDONLY);
-	CHECK(fd >= 0 && nds_load_fd(fd, savePath.c_str(), outDir, 48000, NDS_LANG_ENGLISH, true), "nds_load_fd (file) failed");
+	CHECK(fd >= 0 && nds_load_fd(fd, savePath.c_str(), outDir, 48000, NDS_LANG_ENGLISH, "", true), "nds_load_fd (file) failed");
 	if (fd >= 0) close(fd);
 	nds_game_title(title, sizeof(title));
 	CHECK(strcmp(title, "ADVBOYTEST") == 0, "title after fd load is '%s'", title);
@@ -276,7 +294,9 @@ int main(int argc, char** argv) {
 		}
 		close(fds[1]);
 	});
-	bool piped = nds_load_fd(fds[0], nullptr, outDir, 48000, NDS_LANG_ENGLISH, false);
+	bool piped = nds_load_fd(fds[0], nullptr, outDir, 48000, NDS_LANG_ENGLISH, nullptr, false);
+	CHECK(!piped || gNdsSession->nds->GetFirmware().GetEffectiveUserData().NameLength == 7,
+	      "without a nickname the default (melonDS) should stay");
 	writer.join();
 	close(fds[0]);
 	CHECK(piped, "nds_load_fd (pipe) failed");

@@ -18,6 +18,7 @@
 #include <cstring>
 #include <ctime>
 #include <new>
+#include <string>
 #include <vector>
 
 using namespace melonDS;
@@ -94,13 +95,54 @@ static bool looksLikeNdsRom(const u8* rom, size_t size) {
 	return inside(arm9Offset, arm9Size) && inside(arm7Offset, arm7Size);
 }
 
-static void setFirmwareLanguage(Firmware& firmware, int language) {
-	if (language < 0 || language > NDS_LANG_SPANISH) {
-		return;
+/* UTF-8 to UTF-16 for the firmware nickname (the DS only knows the BMP). */
+static std::u16string toUtf16(const char* text, size_t maxUnits) {
+	std::u16string out;
+	const unsigned char* p = reinterpret_cast<const unsigned char*>(text);
+	while (*p && out.size() < maxUnits) {
+		char32_t c;
+		int extra;
+		if (*p < 0x80) {
+			c = *p;
+			extra = 0;
+		} else if ((*p & 0xE0) == 0xC0) {
+			c = *p & 0x1F;
+			extra = 1;
+		} else if ((*p & 0xF0) == 0xE0) {
+			c = *p & 0x0F;
+			extra = 2;
+		} else {
+			c = 0xFFFD;
+			extra = (*p & 0xF8) == 0xF0 ? 3 : 0;
+		}
+		++p;
+		for (int i = 0; i < extra; ++i) {
+			if ((*p & 0xC0) != 0x80) {
+				c = 0xFFFD;
+				break;
+			}
+			c = (c << 6) | (*p++ & 0x3F);
+		}
+		if (c > 0xFFFF) {
+			c = '?';
+		}
+		out.push_back((char16_t) c);
 	}
+	return out;
+}
+
+static void setFirmwareUser(Firmware& firmware, int language, const char* nickname) {
+	std::u16string name = nickname ? toUtf16(nickname, 10) : std::u16string();
 	for (auto& userData : firmware.GetUserData()) {
-		userData.Settings &= ~Firmware::Language::Reserved;
-		userData.Settings |= language;
+		if (language >= 0 && language <= NDS_LANG_SPANISH) {
+			userData.Settings &= ~Firmware::Language::Reserved;
+			userData.Settings |= language;
+		}
+		if (!name.empty()) {
+			memset(userData.Nickname, 0, sizeof(userData.Nickname));
+			memcpy(userData.Nickname, name.data(), name.size() * sizeof(char16_t));
+			userData.NameLength = (u16) name.size();
+		}
 	}
 	firmware.UpdateChecksums();
 }
@@ -170,7 +212,7 @@ static bool readAll(int fd, std::unique_ptr<u8[]>& data, size_t& length) {
 }
 
 static bool loadOwned(std::unique_ptr<u8[]> rom, size_t romSize, const char* savePath, const char* dataDir,
-                      unsigned sampleRate, int language, bool useJit) {
+                      unsigned sampleRate, int language, const char* nickname, bool useJit) {
 	nds_unload();
 	if (!rom || !looksLikeNdsRom(rom.get(), romSize)) {
 		logMessage("Not a DS ROM, or a damaged one");
@@ -193,7 +235,7 @@ static bool loadOwned(std::unique_ptr<u8[]> rom, size_t romSize, const char* sav
 #else
 	(void) useJit;
 #endif
-	setFirmwareLanguage(args.Firmware, language);
+	setFirmwareUser(args.Firmware, language, nickname);
 
 	session->nds = std::make_unique<NDS>(std::move(args), session);
 	NDS& nds = *session->nds;
@@ -235,7 +277,7 @@ static bool loadOwned(std::unique_ptr<u8[]> rom, size_t romSize, const char* sav
 extern "C" {
 
 bool nds_load(const void* rom, size_t romSize, const char* savePath, const char* dataDir,
-              unsigned sampleRate, int language, bool useJit) {
+              unsigned sampleRate, int language, const char* nickname, bool useJit) {
 	if (!rom || romSize == 0 || romSize > NDS_MAX_ROM_SIZE) {
 		return false;
 	}
@@ -245,16 +287,17 @@ bool nds_load(const void* rom, size_t romSize, const char* savePath, const char*
 		return false;
 	}
 	memcpy(copy.get(), rom, romSize);
-	return loadOwned(std::move(copy), romSize, savePath, dataDir, sampleRate, language, useJit);
+	return loadOwned(std::move(copy), romSize, savePath, dataDir, sampleRate, language, nickname, useJit);
 }
 
-bool nds_load_fd(int fd, const char* savePath, const char* dataDir, unsigned sampleRate, int language, bool useJit) {
+bool nds_load_fd(int fd, const char* savePath, const char* dataDir, unsigned sampleRate, int language,
+                 const char* nickname, bool useJit) {
 	std::unique_ptr<u8[]> rom;
 	size_t size = 0;
 	if (fd < 0 || !readAll(fd, rom, size)) {
 		return false;
 	}
-	return loadOwned(std::move(rom), size, savePath, dataDir, sampleRate, language, useJit);
+	return loadOwned(std::move(rom), size, savePath, dataDir, sampleRate, language, nickname, useJit);
 }
 
 void nds_unload(void) {
@@ -282,6 +325,7 @@ void nds_reset(void) {
 	}
 	writeSaveToDisk(session);
 	ndsRewindClear(session);
+	session->lidApplied = false; // Reset() opens the lid
 	NDS& nds = *session->nds;
 	nds.Reset();
 	if (nds.NeedsDirectBoot()) {
@@ -303,6 +347,12 @@ void nds_run_frame(void) {
 		nds.TouchScreen((u16) session->touchX.load(), (u16) session->touchY.load());
 	} else {
 		nds.ReleaseScreen();
+	}
+	// Only on changes: opening the lid raises an interrupt.
+	bool lid = session->lidClosed;
+	if (lid != session->lidApplied) {
+		nds.SetLidClosed(lid);
+		session->lidApplied = lid;
 	}
 	nds.RunFrame();
 	ndsRewindAfterFrame(session);
@@ -343,6 +393,17 @@ void nds_set_mic_blow(bool blowing) {
 	if (gNdsSession) {
 		gNdsSession->micBlow = blowing;
 	}
+}
+
+void nds_set_lid(bool closed) {
+	if (gNdsSession) {
+		gNdsSession->lidClosed = closed;
+	}
+}
+
+bool nds_lid_closed(void) {
+	NdsSession* session = gNdsSession;
+	return session && session->nds && session->nds->IsLidClosed();
 }
 
 size_t nds_copy_video(void* dst, size_t dstCapacity, unsigned* width, unsigned* height) {

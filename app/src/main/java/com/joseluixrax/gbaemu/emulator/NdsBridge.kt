@@ -41,6 +41,7 @@ object NdsBridge {
         dataDir: String?,
         sampleRate: Int,
         language: Int,
+        nickname: String,
         useJit: Boolean,
     ): Boolean
 
@@ -48,7 +49,7 @@ object NdsBridge {
     external fun reset()
     external fun runFrame()
 
-    /** [keys]: [GbaKeys] + [DsKeys] bits. [touch]: [EmuCore.packTouch] or [EmuCore.NO_TOUCH]. */
+    /** [keys]: [GbaKeys] + [DsKeys] bits (lid included). [touch]: [EmuCore.packTouch] or [EmuCore.NO_TOUCH]. */
     external fun setInput(keys: Int, touch: Int)
 
     /** Both screens, top then bottom (256x384 RGBA). Returns (width shl 16) or height. */
