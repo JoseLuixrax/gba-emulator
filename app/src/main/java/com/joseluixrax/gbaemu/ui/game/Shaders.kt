@@ -38,14 +38,20 @@ precision mediump float;
 uniform sampler2D uTexture;
 uniform vec2 uTextureSize;
 uniform vec2 uOutputSize;
+// Texture rows that belong to the picture being drawn (DS frames hold two
+// screens), so filtering never blends in the other screen.
+uniform vec2 uRowRange;
 varying vec2 vTexCoord;
+vec2 keepInside(vec2 uv) {
+    return vec2(uv.x, clamp(uv.y, uRowRange.x, uRowRange.y));
+}
 """,
         )
         when (filter) {
             Filter.NEAREST, Filter.LINEAR -> append(
                 """
 vec3 sampleGame(vec2 uv) {
-    return texture2D(uTexture, uv).rgb;
+    return texture2D(uTexture, keepInside(uv)).rgb;
 }
 """,
             )
@@ -61,7 +67,7 @@ vec3 sampleGame(vec2 uv) {
     vec2 regionRange = 0.5 - 0.5 / scale;
     vec2 centerDist = s - 0.5;
     vec2 f = (centerDist - clamp(centerDist, -regionRange, regionRange)) * scale + 0.5;
-    return texture2D(uTexture, (texelFloored + f) / uTextureSize).rgb;
+    return texture2D(uTexture, keepInside((texelFloored + f) / uTextureSize)).rgb;
 }
 """,
             )

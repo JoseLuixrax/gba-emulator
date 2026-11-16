@@ -13,7 +13,8 @@ import kotlin.math.roundToInt
  * Pacing:
  *  - Normal speed with sound: the blocking audio write sets the pace
  *    (the GBA produces exactly one second of audio per emulated second).
- *  - Muted, fast forward, rewind: a timer at the GBA refresh rate (59.73 Hz).
+ *  - Muted, fast forward, rewind: a timer at the console's refresh rate
+ *    (59.73 Hz on GBA, 59.83 Hz on DS).
  *
  * Anything that touches the native core must run on this thread, so other
  * threads send work with [post].
@@ -35,7 +36,17 @@ class EmulatorThread(
         fun onRumble()
     }
 
+    /** The core being run. Set it on this thread, right after loading a game. */
+    @Volatile var core: EmuCore = GbaCore
+        set(value) {
+            field = value
+            coreAudioSpeed = 1f
+        }
+
     @Volatile var keys = 0
+
+    /** Finger on the DS touch screen ([EmuCore.packTouch]), or [EmuCore.NO_TOUCH]. */
+    @Volatile var touch = EmuCore.NO_TOUCH
     @Volatile var fastForward = false
 
     /**
@@ -53,7 +64,8 @@ class EmulatorThread(
     @Volatile private var quitRequested = false
     private val tasks = ConcurrentLinkedQueue<Runnable>()
     private val monitor = Object()
-    private val audioBuffer = ShortArray(8192 * 2)
+    // x0.1 slow motion: ten frames' worth of audio per frame, with room to spare.
+    private val audioBuffer = ShortArray(16384 * 2)
 
     /** Audio speed currently set in the core (1 = normal). */
     private var coreAudioSpeed = 1f
@@ -117,7 +129,7 @@ class EmulatorThread(
                     fastForward -> stepFastForward(nextFrameTime)
                     else -> stepNormal(nextFrameTime)
                 }
-                if (NativeBridge.pollRumble()) callbacks.onRumble()
+                if (core.pollRumble()) callbacks.onRumble()
             } catch (e: Exception) {
                 Log.e(TAG, "Emulation error", e)
                 paused = true
@@ -128,8 +140,8 @@ class EmulatorThread(
 
     private fun stepNormal(nextFrameTime: Long): Long {
         setCoreAudioSpeed(1f)
-        NativeBridge.setKeys(keys)
-        NativeBridge.runFrame()
+        core.setInput(keys, touch)
+        core.runFrame()
         publishFrame(1)
         return playAudioOrPace(audioEnabled, nextFrameTime)
     }
@@ -144,9 +156,9 @@ class EmulatorThread(
         if (speed <= 0f) {
             // Unlimited: as fast as the phone can go, there is no speed to play the music at.
             setCoreAudioSpeed(1f)
-            NativeBridge.setKeys(keys)
-            NativeBridge.runFrame()
-            NativeBridge.discardAudio()
+            core.setInput(keys, touch)
+            core.runFrame()
+            core.discardAudio()
             publishFrame(1)
             return System.nanoTime()
         }
@@ -154,8 +166,8 @@ class EmulatorThread(
         val frames = speed.roundToInt()
         val withSound = audioEnabled && fastForwardAudio
         setCoreAudioSpeed(if (withSound) frames.toFloat() else 1f)
-        NativeBridge.setKeys(keys)
-        repeat(frames) { NativeBridge.runFrame() }
+        core.setInput(keys, touch)
+        repeat(frames) { core.runFrame() }
         publishFrame(frames)
         return playAudioOrPace(withSound, nextFrameTime)
     }
@@ -168,21 +180,21 @@ class EmulatorThread(
     private fun stepSlowMotion(speed: Float, nextFrameTime: Long): Long {
         val withSound = audioEnabled && fastForwardAudio
         setCoreAudioSpeed(if (withSound) speed else 1f)
-        NativeBridge.setKeys(keys)
-        NativeBridge.runFrame()
+        core.setInput(keys, touch)
+        core.runFrame()
         publishFrame(1)
-        return playAudioOrPace(withSound, nextFrameTime, (FRAME_NANOS / speed).toLong())
+        return playAudioOrPace(withSound, nextFrameTime, (core.frameNanos / speed).toLong())
     }
 
     /** Writes this step's audio (blocking = real-time pacing), or sleeps if there is none. */
-    private fun playAudioOrPace(withSound: Boolean, nextFrameTime: Long, period: Long = FRAME_NANOS): Long {
+    private fun playAudioOrPace(withSound: Boolean, nextFrameTime: Long, period: Long = core.frameNanos): Long {
         if (withSound) {
-            val frames = NativeBridge.readAudio(audioBuffer)
+            val frames = core.readAudio(audioBuffer)
             if (frames > 0 && audio.write(audioBuffer, frames)) {
                 return System.nanoTime()
             }
         } else {
-            NativeBridge.discardAudio()
+            core.discardAudio()
         }
         // No audio output to wait on: keep time ourselves.
         return pace(nextFrameTime, period)
@@ -190,23 +202,23 @@ class EmulatorThread(
 
     private fun setCoreAudioSpeed(speed: Float) {
         if (speed != coreAudioSpeed) {
-            NativeBridge.setAudioSpeed(speed)
+            core.setAudioSpeed(speed)
             coreAudioSpeed = speed
         }
     }
 
     private fun stepRewind(nextFrameTime: Long): Long {
         setCoreAudioSpeed(1f)
-        NativeBridge.setKeys(0)
-        if (NativeBridge.rewindStep()) {
+        core.setInput(0, EmuCore.NO_TOUCH)
+        if (core.rewindStep()) {
             publishFrame(1)
         }
-        NativeBridge.discardAudio()
+        core.discardAudio()
         return pace(nextFrameTime)
     }
 
     private fun publishFrame(emulatedFrames: Int) {
-        if (frameBuffer.captureFromCore()) {
+        if (frameBuffer.captureFromCore(core)) {
             callbacks.onFrameReady()
         }
         countFps(emulatedFrames)
@@ -229,7 +241,7 @@ class EmulatorThread(
     }
 
     /** Sleeps until the next frame is due; never tries to "catch up" a backlog. */
-    private fun pace(previous: Long, period: Long = FRAME_NANOS): Long {
+    private fun pace(previous: Long, period: Long = core.frameNanos): Long {
         val now = System.nanoTime()
         var target = previous + period
         if (target < now - period * 3) target = now
@@ -251,8 +263,5 @@ class EmulatorThread(
 
     companion object {
         private const val TAG = "EmulatorThread"
-
-        /** One GBA frame: 280896 cycles at 16.78 MHz = 16.743 ms (59.73 Hz). */
-        const val FRAME_NANOS = 16_742_706L
     }
 }

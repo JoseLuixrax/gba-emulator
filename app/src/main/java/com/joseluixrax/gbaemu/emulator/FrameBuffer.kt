@@ -29,8 +29,8 @@ class FrameBuffer {
         private set
 
     /** Emulator thread: grab the frame the core just finished. */
-    fun captureFromCore(): Boolean = synchronized(lock) {
-        val packed = NativeBridge.copyFrame(pixels)
+    fun captureFromCore(core: EmuCore): Boolean = synchronized(lock) {
+        val packed = core.copyFrame(pixels)
         if (packed == 0) return false
         width = packed ushr 16
         height = packed and 0xFFFF
@@ -51,7 +51,8 @@ class FrameBuffer {
     }
 
     companion object {
+        // Super Game Boy borders are 256x224; DS games are two 256x192 screens.
         const val MAX_WIDTH = 256
-        const val MAX_HEIGHT = 224
+        const val MAX_HEIGHT = 384
     }
 }

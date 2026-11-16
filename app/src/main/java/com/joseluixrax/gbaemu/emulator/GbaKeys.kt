@@ -13,3 +13,10 @@ object GbaKeys {
     const val R = 1 shl 8
     const val L = 1 shl 9
 }
+
+/** The DS buttons the GBA doesn't have, plus "blow into the mic", in the same key word. */
+object DsKeys {
+    const val X = 1 shl 10
+    const val Y = 1 shl 11
+    const val MIC = 1 shl 12
+}

@@ -20,28 +20,36 @@ concurrency:
 
 env:
   MGBA_VERSION: "0.10.5"
+  MELONDS_VERSION: "1.1"
 
 jobs:
-  # Runs the emulation core on Linux with the test ROMs in native-test/roms.
+  # Runs both emulation cores on Linux: the GBA test ROMs in native-test/roms
+  # and the DS test ROM in native-test/nds-roms.
   native-tests:
     name: Native core tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download mGBA sources
+      - name: Download mGBA and melonDS sources
         run: |
           mkdir -p third_party
           curl -sSL "https://github.com/mgba-emu/mgba/archive/refs/tags/${MGBA_VERSION}.tar.gz" | tar xz -C third_party
           mv "third_party/mgba-${MGBA_VERSION}" third_party/mgba
+          curl -sSL "https://github.com/melonDS-emu/melonDS/archive/refs/tags/${MELONDS_VERSION}.tar.gz" | tar xz -C third_party
+          mv "third_party/melonDS-${MELONDS_VERSION}" third_party/melonds
 
       - name: Build test harness
         run: |
-          cmake -S native-test -B build/native-test -DCMAKE_BUILD_TYPE=Release -DMGBA_DIR="$PWD/third_party/mgba"
+          cmake -S native-test -B build/native-test -DCMAKE_BUILD_TYPE=Release \
+            -DMGBA_DIR="$PWD/third_party/mgba" -DMELONDS_DIR="$PWD/third_party/melonds"
           cmake --build build/native-test -j"$(nproc)"
 
-      - name: Run test ROMs
+      - name: Run GBA test ROMs
         run: ./build/native-test/host_test native-test/roms build/native-test/out
+
+      - name: Run DS test ROM
+        run: ./build/native-test/nds_host_test native-test/nds-roms/test.nds build/native-test/out-nds
 
       - name: Upload screenshots
         if: always()
@@ -109,4 +117,4 @@ jobs:
             Enlace fijo a la última versión:
             https://github.com/${{ github.repository }}/releases/latest/download/AdvanceBoy.apk
 
-            Requiere Android 8.0 o superior. Se instala encima de versiones anteriores sin perder partidas.
+            Requiere Android 8.0 o superior (los juegos de DS, un móvil de 64 bits). Se instala encima de versiones anteriores sin perder partidas.

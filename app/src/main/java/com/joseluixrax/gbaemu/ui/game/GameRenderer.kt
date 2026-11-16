@@ -1,5 +1,6 @@
 package com.joseluixrax.gbaemu.ui.game
 
+import android.graphics.RectF
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.Log
@@ -12,10 +13,13 @@ import javax.microedition.khronos.opengles.GL10
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * Draws the latest emulator frame as a textured quad, scaled to the screen
- * with the selected filter. Runs on GLSurfaceView's render thread.
+ * with the selected filter. DS frames hold both screens (top above bottom in
+ * the texture) and are drawn as two quads placed by [DsScreens].
+ * Runs on GLSurfaceView's render thread.
  */
 class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Renderer {
 
@@ -26,6 +30,9 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
         val effect: Shaders.Effect = Shaders.Effect.NONE,
         val colorCorrection: Boolean = false,
         val aspect: Aspect = Aspect.KEEP,
+        /** The frame is a DS frame: two screens to place separately. */
+        val ds: Boolean = false,
+        val dsLandscape: DsScreens.Landscape = DsScreens.Landscape.STACKED,
     )
 
     @Volatile private var settings = Settings()
@@ -40,19 +47,19 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
     private var texCoordHandle = 0
     private var textureSizeHandle = 0
     private var outputSizeHandle = 0
+    private var rowRangeHandle = 0
     private var textureWidth = 0
     private var textureHeight = 0
     private var uploadedVersion = -1L
     private var surfaceWidth = 1
     private var surfaceHeight = 1
 
-    private val quad: FloatBuffer = floatBuffer(
-        // x, y, u, v. Texture row 0 is the top of the game screen.
-        -1f, -1f, 0f, 1f,
-        1f, -1f, 1f, 1f,
-        -1f, 1f, 0f, 0f,
-        1f, 1f, 1f, 0f,
-    )
+    // x, y, u, v. Texture row 0 is the top of the game screen.
+    private val quad = quadFor(0f, 1f)
+
+    // DS: upper and lower half of the texture.
+    private val topScreenQuad = quadFor(0f, 0.5f)
+    private val bottomScreenQuad = quadFor(0.5f, 1f)
 
     fun updateSettings(newSettings: Settings) {
         if (newSettings != settings) {
@@ -107,19 +114,49 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (textureWidth == 0 || program == 0) return
 
-        val (x, y, w, h) = viewport(textureWidth, textureHeight)
+        val s = settings
+        if (s.ds && textureHeight == textureWidth * 3 / 2) {
+            val layout = DsScreens.compute(
+                surfaceWidth, surfaceHeight, topInset, s.dsLandscape, s.aspect == Aspect.INTEGER,
+            )
+            drawQuad(layout.top, topScreenQuad, 0f, 0.5f)
+            drawQuad(layout.bottom, bottomScreenQuad, 0.5f, 1f)
+        } else {
+            val (x, y, w, h) = viewport(textureWidth, textureHeight)
+            draw(x, y, w, h, quad, 0f, 1f)
+        }
+    }
+
+    /** [rect] in view pixels from the top-left, as [DsScreens] gives it. */
+    private fun drawQuad(rect: RectF, vertices: FloatBuffer, vTop: Float, vBottom: Float) {
+        val x = rect.left.roundToInt()
+        val w = rect.right.roundToInt() - x
+        val top = rect.top.roundToInt()
+        val h = rect.bottom.roundToInt() - top
+        if (w <= 0 || h <= 0) return
+        draw(x, surfaceHeight - top - h, w, h, vertices, vTop, vBottom)
+    }
+
+    /**
+     * Draws [vertices] (texture rows [vTop] to [vBottom]) into the GL viewport
+     * (x, y, w, h). The shaders get the size the whole texture would have at
+     * this scale, so they know how big one game pixel is on screen.
+     */
+    private fun draw(x: Int, y: Int, w: Int, h: Int, vertices: FloatBuffer, vTop: Float, vBottom: Float) {
         GLES20.glViewport(x, y, w, h)
         GLES20.glUseProgram(program)
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture)
         GLES20.glUniform2f(textureSizeHandle, textureWidth.toFloat(), textureHeight.toFloat())
-        GLES20.glUniform2f(outputSizeHandle, w.toFloat(), h.toFloat())
+        GLES20.glUniform2f(outputSizeHandle, w.toFloat(), h / (vBottom - vTop))
+        val halfRow = 0.5f / textureHeight
+        GLES20.glUniform2f(rowRangeHandle, vTop + halfRow, vBottom - halfRow)
 
-        quad.position(0)
-        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 16, quad)
+        vertices.position(0)
+        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 16, vertices)
         GLES20.glEnableVertexAttribArray(positionHandle)
-        quad.position(2)
-        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 16, quad)
+        vertices.position(2)
+        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 16, vertices)
         GLES20.glEnableVertexAttribArray(texCoordHandle)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
     }
@@ -187,6 +224,7 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
         texCoordHandle = GLES20.glGetAttribLocation(program, "aTexCoord")
         textureSizeHandle = GLES20.glGetUniformLocation(program, "uTextureSize")
         outputSizeHandle = GLES20.glGetUniformLocation(program, "uOutputSize")
+        rowRangeHandle = GLES20.glGetUniformLocation(program, "uRowRange")
         GLES20.glUseProgram(program)
         GLES20.glUniform1i(GLES20.glGetUniformLocation(program, "uTexture"), 0)
     }
@@ -230,6 +268,14 @@ class GameRenderer(private val frameBuffer: FrameBuffer) : GLSurfaceView.Rendere
 
     private companion object {
         const val TAG = "GameRenderer"
+
+        /** Full-viewport quad showing texture rows [vTop, vBottom] (0 = top, 1 = bottom). */
+        fun quadFor(vTop: Float, vBottom: Float) = floatBuffer(
+            -1f, -1f, 0f, vBottom,
+            1f, -1f, 1f, vBottom,
+            -1f, 1f, 0f, vTop,
+            1f, 1f, 1f, vTop,
+        )
 
         fun floatBuffer(vararg values: Float): FloatBuffer =
             ByteBuffer.allocateDirect(values.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply {

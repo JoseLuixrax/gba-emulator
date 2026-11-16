@@ -41,6 +41,7 @@
                 <data android:mimeType="application/x-gba-rom" />
                 <data android:mimeType="application/x-gameboy-rom" />
                 <data android:mimeType="application/x-gameboy-color-rom" />
+                <data android:mimeType="application/x-nintendo-ds-rom" />
             </intent-filter>
         </activity>
 

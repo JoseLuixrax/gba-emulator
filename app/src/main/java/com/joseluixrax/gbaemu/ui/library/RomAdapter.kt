@@ -62,6 +62,7 @@ class RomAdapter(
         val system = when (ext) {
             "gb" -> "Game Boy"
             "gbc" -> "Game Boy Color"
+            "nds" -> "Nintendo DS"
             "zip" -> "ZIP"
             else -> "Game Boy Advance"
         }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
+import android.graphics.RectF
 import android.net.Uri
 import android.opengl.GLSurfaceView
 import android.os.Build
@@ -32,11 +33,15 @@ import com.joseluixrax.gbaemu.cheats.Cheat
 import com.joseluixrax.gbaemu.cheats.CheatStore
 import com.joseluixrax.gbaemu.databinding.ActivityGameBinding
 import com.joseluixrax.gbaemu.emulator.AudioOutput
+import com.joseluixrax.gbaemu.emulator.EmuCore
 import com.joseluixrax.gbaemu.emulator.EmulatorThread
 import com.joseluixrax.gbaemu.emulator.FrameBuffer
 import com.joseluixrax.gbaemu.emulator.GameFiles
+import com.joseluixrax.gbaemu.emulator.GbaCore
 import com.joseluixrax.gbaemu.emulator.GbaKeys
 import com.joseluixrax.gbaemu.emulator.NativeBridge
+import com.joseluixrax.gbaemu.emulator.NdsBridge
+import com.joseluixrax.gbaemu.emulator.NdsCore
 import com.joseluixrax.gbaemu.emulator.RomLoader
 import com.joseluixrax.gbaemu.ui.cheats.CheatsActivity
 import com.joseluixrax.gbaemu.ui.library.RecentGames
@@ -77,6 +82,11 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     private var gameLoaded = false
     private var hardware = 0
     private var platform = NativeBridge.PLATFORM_GBA
+
+    /** Nintendo DS game (melonDS) instead of GBA/GB/GBC (mGBA). */
+    private var isDs = false
+    private var dsLandscape = DsScreens.Landscape.STACKED
+    private var integerScale = false
     private var solarLevel = 5
     private var activityResumed = false
 
@@ -149,18 +159,23 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         physicalKeys = 0
         stickKeys = 0
         pushKeys()
+        emulator.touch = EmuCore.NO_TOUCH
         emulator.rewinding = false
+        // The DS core writes its save once the game stops touching it, which
+        // needs frames to run: write it now in case we never come back.
+        if (gameLoaded && isDs) emulator.post { NdsBridge.flushSave() }
         super.onPause()
     }
 
     override fun onStop() {
         super.onStop()
-        if (gameLoaded && prefs.autoSaveState) saveState(GameFiles.AUTO_SLOT, quiet = true)
+        if (gameLoaded && !isDs && prefs.autoSaveState) saveState(GameFiles.AUTO_SLOT, quiet = true)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        emulator.post { NativeBridge.unload() }
+        // emulator.core is the core that loaded the game (GBA unless a DS game loaded fine).
+        emulator.post { emulator.core.unload() }
         emulator.quit()
         try {
             emulator.join(5000)
@@ -201,28 +216,62 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
                 showFatalError(getString(R.string.error_reading_rom, e.message ?: e.javaClass.simpleName))
                 return@launch
             }
-            val bios = GameFiles.biosFile(this@GameActivity).takeIf { it.isFile }?.path
-            val autoState = files.stateFile(GameFiles.AUTO_SLOT)
-            val loadAuto = prefs.autoLoadState && autoState.isFile
-            val cheats = withContext(Dispatchers.IO) { cheatStore.load() }
-            appliedCheats = cheats.map { it.copy() }
-
-            emulator.post {
-                val ok = NativeBridge.loadRom(
-                    rom.data, files.saveFile.path, bios, audio.sampleRate,
-                    prefs.skipBios, prefs.frameskip, prefs.idleLoopDetect, prefs.gbColorize,
-                )
-                var restored = false
-                var hw = 0
-                var loadedPlatform = NativeBridge.PLATFORM_NONE
-                if (ok) {
-                    hw = NativeBridge.hardware()
-                    loadedPlatform = NativeBridge.platform()
-                    applyCheats(cheats)
-                    if (loadAuto) restored = NativeBridge.loadState(autoState.path)
-                }
-                runOnUiThread { onGameLoaded(ok, hw, loadedPlatform, restored) }
+            when (rom) {
+                is RomLoader.Rom.Gba -> startGba(rom)
+                is RomLoader.Rom.Nds -> startDs(rom)
             }
+        }
+    }
+
+    private suspend fun startGba(rom: RomLoader.Rom.Gba) {
+        val bios = GameFiles.biosFile(this@GameActivity).takeIf { it.isFile }?.path
+        val autoState = files.stateFile(GameFiles.AUTO_SLOT)
+        val loadAuto = prefs.autoLoadState && autoState.isFile
+        val cheats = withContext(Dispatchers.IO) { cheatStore.load() }
+        appliedCheats = cheats.map { it.copy() }
+
+        emulator.post {
+            val ok = NativeBridge.loadRom(
+                rom.data, files.saveFile.path, bios, audio.sampleRate,
+                prefs.skipBios, prefs.frameskip, prefs.idleLoopDetect, prefs.gbColorize,
+            )
+            var restored = false
+            var hw = 0
+            var loadedPlatform = NativeBridge.PLATFORM_NONE
+            if (ok) {
+                emulator.core = GbaCore
+                hw = NativeBridge.hardware()
+                loadedPlatform = NativeBridge.platform()
+                applyCheats(cheats)
+                if (loadAuto) restored = NativeBridge.loadState(autoState.path)
+            }
+            runOnUiThread { onGameLoaded(ok, hw, loadedPlatform, restored) }
+        }
+    }
+
+    private fun startDs(rom: RomLoader.Rom.Nds) {
+        if (!NdsBridge.available) {
+            rom.cleanUp()
+            showFatalError(getString(R.string.error_ds_unsupported))
+            return
+        }
+        isDs = true
+        // melonDS keeps nothing important here, but it wants a folder of its own.
+        val dataDir = File(filesDir, "nds").apply { mkdirs() }
+        val language = NdsBridge.languageFor(Locale.getDefault())
+        val useJit = prefs.dsJit
+        emulator.post {
+            val ok = try {
+                rom.open().use { fd ->
+                    NdsBridge.loadRomFd(fd.fd, files.saveFile.path, dataDir.path, audio.sampleRate, language, useJit)
+                }
+            } catch (e: Exception) {
+                false
+            } finally {
+                rom.cleanUp()
+            }
+            if (ok) emulator.core = NdsCore
+            runOnUiThread { onGameLoaded(ok, 0, NativeBridge.PLATFORM_NONE, false) }
         }
     }
 
@@ -237,7 +286,12 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         platform = loadedPlatform
         sensors.configure(hw)
         if (activityResumed) sensors.start()
-        NativeBridge.setSolarLevel(solarLevel)
+        if (isDs) {
+            binding.pad.dsMode = true
+            binding.pad.touchScreenArea = { dsBottomScreen() }
+        } else {
+            NativeBridge.setSolarLevel(solarLevel)
+        }
         rewindConfig = null
         applySettings()
         if (restored) toast(getString(R.string.state_restored))
@@ -256,6 +310,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
 
     /** Reads settings that may have changed while we were in the settings screen. */
     private fun applySettings() {
+        dsLandscape = DsScreens.landscapeFrom(prefs.dsLandscape)
+        integerScale = prefs.aspectMode == "integer"
         renderer.updateSettings(
             GameRenderer.Settings(
                 filter = Shaders.filterFrom(prefs.videoFilter),
@@ -266,6 +322,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
                     "stretch" -> GameRenderer.Aspect.STRETCH
                     else -> GameRenderer.Aspect.KEEP
                 },
+                ds = isDs,
+                dsLandscape = dsLandscape,
             ),
         )
         binding.gameView.requestRender()
@@ -283,7 +341,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             globalScale = prefs.padScale / 100f
             hapticsEnabled = prefs.haptics
             diagonals = prefs.dpadDiagonals
-            showRewind = prefs.rewindEnabled
+            showRewind = prefs.rewindEnabled && !isDs
         }
         fastForwardToggleMode = prefs.fastForwardToggle
         emulator.fastForwardSpeed = prefs.fastForwardSpeed
@@ -297,7 +355,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
 
-        if (gameLoaded) {
+        if (gameLoaded && !isDs) {
             val frameskip = prefs.frameskip
             val newRewind = prefs.rewindEnabled to prefs.rewindSeconds
             val rewindChanged = newRewind != rewindConfig
@@ -368,7 +426,22 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     }
 
     override fun onRewindButton(down: Boolean) {
-        emulator.rewinding = down && prefs.rewindEnabled
+        emulator.rewinding = down && prefs.rewindEnabled && !isDs
+    }
+
+    override fun onScreenTouch(x: Int, y: Int) {
+        emulator.touch = EmuCore.packTouch(x, y)
+    }
+
+    override fun onScreenRelease() {
+        emulator.touch = EmuCore.NO_TOUCH
+    }
+
+    /** The DS bottom screen in the pad view's pixels: same maths the renderer draws with. */
+    private fun dsBottomScreen(): RectF? {
+        val pad = binding.pad
+        if (pad.width == 0 || pad.height == 0) return null
+        return DsScreens.compute(pad.width, pad.height, renderer.topInset, dsLandscape, integerScale).bottom
     }
 
     private fun pushKeys() {
@@ -440,8 +513,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     }
 
     private fun handleAction(action: InputAction, down: Boolean) {
-        if (action.gbaKey != 0) {
-            physicalKeys = if (down) physicalKeys or action.gbaKey else physicalKeys and action.gbaKey.inv()
+        if (action.key != 0) {
+            physicalKeys = if (down) physicalKeys or action.key else physicalKeys and action.key.inv()
             pushKeys()
             return
         }
@@ -463,8 +536,11 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         updatePaused()
 
         val entries = mutableListOf<Pair<String, () -> Unit>>()
-        entries += getString(R.string.save_state) to { showStateDialog(saving = true) }
-        entries += getString(R.string.load_state) to { showStateDialog(saving = false) }
+        // Save states, cheats and rewind aren't available for DS games yet.
+        if (!isDs) {
+            entries += getString(R.string.save_state) to { showStateDialog(saving = true) }
+            entries += getString(R.string.load_state) to { showStateDialog(saving = false) }
+        }
         val slowMotion = prefs.fastForwardSpeed.let { it > 0f && it < 1f }
         val speedLabel = when {
             slowMotion && fastForwardOn -> R.string.slow_motion_off
@@ -476,15 +552,17 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             setFastForward(!fastForwardOn)
             closeMenu()
         }
-        entries += getString(R.string.cheats) to {
-            closeMenu()
-            startActivity(CheatsActivity.intent(this, gameName, platform))
+        if (!isDs) {
+            entries += getString(R.string.cheats) to {
+                closeMenu()
+                startActivity(CheatsActivity.intent(this, gameName, platform))
+            }
         }
         entries += getString(R.string.screenshot) to {
             takeScreenshot()
             closeMenu()
         }
-        if (hardware and NativeBridge.HW_LIGHT_SENSOR != 0) {
+        if (!isDs && hardware and NativeBridge.HW_LIGHT_SENSOR != 0) {
             entries += getString(R.string.solar_sensor) to { showSolarDialog() }
         }
         entries += getString(R.string.edit_controls) to {
@@ -531,7 +609,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     private fun confirmReset() {
         MaterialAlertDialogBuilder(this)
             .setMessage(R.string.reset_confirm)
-            .setPositiveButton(R.string.reset_game) { _, _ -> emulator.post { NativeBridge.reset() } }
+            .setPositiveButton(R.string.reset_game) { _, _ -> emulator.post { emulator.core.reset() } }
             .setNegativeButton(android.R.string.cancel, null)
             .setOnDismissListener { closeMenu() }
             .show()
@@ -562,7 +640,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     // ----------------------------------------------------- states & files
 
     private fun saveState(slot: Int, quiet: Boolean = false) {
-        if (!gameLoaded) return
+        if (!gameLoaded || isDs) return
         val thumbnail = frameBuffer.toBitmap()
         val stateFile = files.stateFile(slot)
         val thumbFile = files.thumbnailFile(slot)
@@ -578,7 +656,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     }
 
     private fun loadState(slot: Int) {
-        if (!gameLoaded) return
+        if (!gameLoaded || isDs) return
         val stateFile = files.stateFile(slot)
         if (!stateFile.isFile) {
             toast(getString(R.string.slot_empty))
@@ -586,7 +664,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         }
         emulator.post {
             val ok = NativeBridge.loadState(stateFile.path)
-            if (ok) frameBuffer.captureFromCore()
+            if (ok) frameBuffer.captureFromCore(emulator.core)
             runOnUiThread {
                 binding.gameView.requestRender()
                 toast(if (ok) getString(R.string.state_loaded, slotName(slot)) else getString(R.string.state_load_failed))
@@ -607,8 +685,9 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
 
     private fun takeScreenshot() {
         val frame = frameBuffer.toBitmap() ?: return
-        // Native resolution is tiny on a phone gallery: save it 4x, pixel-sharp.
-        val big = Bitmap.createScaledBitmap(frame, frame.width * 4, frame.height * 4, false)
+        // Native resolution is tiny on a phone gallery: save it bigger, pixel-sharp.
+        val factor = if (isDs) 3 else 4
+        val big = Bitmap.createScaledBitmap(frame, frame.width * factor, frame.height * factor, false)
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val name = "${gameName}_$stamp.png"
         lifecycleScope.launch(Dispatchers.IO) {

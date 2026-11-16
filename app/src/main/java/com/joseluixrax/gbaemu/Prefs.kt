@@ -45,6 +45,11 @@ class Prefs(context: Context) {
     val skipBios: Boolean get() = raw.getBoolean(KEY_SKIP_BIOS, true)
     val gyroSensitivity: Int get() = raw.getInt(KEY_GYRO_SENSITIVITY, 100)
 
+    // Nintendo DS
+    /** "stacked" (one above the other) or "side" (side by side), when the phone is sideways. */
+    val dsLandscape: String get() = raw.getString(KEY_DS_LANDSCAPE, "stacked") ?: "stacked"
+    val dsJit: Boolean get() = raw.getBoolean(KEY_DS_JIT, true)
+
     // Library
     var romFolder: String?
         get() = raw.getString(KEY_ROM_FOLDER, null)
@@ -79,6 +84,8 @@ class Prefs(context: Context) {
         const val KEY_BIOS = "bios_file"
         const val KEY_SKIP_BIOS = "skip_bios"
         const val KEY_GYRO_SENSITIVITY = "gyro_sensitivity"
+        const val KEY_DS_LANDSCAPE = "ds_landscape"
+        const val KEY_DS_JIT = "ds_jit"
         const val KEY_ABOUT = "about"
         const val KEY_OPEN_SAVES = "open_saves_folder"
         const val KEY_LICENSES = "licenses"

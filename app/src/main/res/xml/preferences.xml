@@ -199,6 +199,25 @@
 
     <PreferenceCategory
         app:iconSpaceReserved="false"
+        app:title="@string/pref_cat_ds">
+        <ListPreference
+            app:defaultValue="stacked"
+            app:entries="@array/ds_landscape_entries"
+            app:entryValues="@array/ds_landscape_values"
+            app:iconSpaceReserved="false"
+            app:key="ds_landscape"
+            app:title="@string/pref_ds_landscape"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:iconSpaceReserved="false"
+            app:key="ds_jit"
+            app:summary="@string/pref_ds_jit_summary"
+            app:title="@string/pref_ds_jit" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
         app:title="@string/pref_cat_files">
         <Preference
             app:iconSpaceReserved="false"

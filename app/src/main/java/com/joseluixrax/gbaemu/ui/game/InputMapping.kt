@@ -5,20 +5,24 @@ import android.view.KeyEvent
 import androidx.annotation.StringRes
 // Aliased: the enum entry `R` (shoulder button) would otherwise hide the R class.
 import com.joseluixrax.gbaemu.R as Res
+import com.joseluixrax.gbaemu.emulator.DsKeys
 import com.joseluixrax.gbaemu.emulator.GbaKeys
 
-/** Things a physical button (gamepad, keyboard) can be bound to. */
-enum class InputAction(val id: String, @StringRes val label: Int, val gbaKey: Int = 0) {
+/** Things a physical button (gamepad, keyboard) can be bound to. [key]: console key bit, 0 for app actions. */
+enum class InputAction(val id: String, @StringRes val label: Int, val key: Int = 0) {
     UP("up", Res.string.key_up, GbaKeys.UP),
     DOWN("down", Res.string.key_down, GbaKeys.DOWN),
     LEFT("left", Res.string.key_left, GbaKeys.LEFT),
     RIGHT("right", Res.string.key_right, GbaKeys.RIGHT),
     A("a", Res.string.key_a, GbaKeys.A),
     B("b", Res.string.key_b, GbaKeys.B),
+    X("x", Res.string.key_x, DsKeys.X),
+    Y("y", Res.string.key_y, DsKeys.Y),
     L("l", Res.string.key_l, GbaKeys.L),
     R("r", Res.string.key_r, GbaKeys.R),
     START("start", Res.string.key_start, GbaKeys.START),
     SELECT("select", Res.string.key_select, GbaKeys.SELECT),
+    MIC("mic", Res.string.key_mic, DsKeys.MIC),
     FAST_FORWARD("fast_forward", Res.string.key_fast_forward),
     REWIND("rewind", Res.string.key_rewind),
     MENU("menu", Res.string.key_menu),
@@ -33,7 +37,8 @@ enum class InputAction(val id: String, @StringRes val label: Int, val gbaKey: In
 object InputMapping {
     private const val PREFIX = "keymap_"
 
-    // Nintendo-style positions: the right face button is A, the bottom one is B.
+    // Nintendo-style positions: the right face button is A, the bottom one B,
+    // the top one X and the left one Y.
     private val DEFAULTS: Map<InputAction, List<Int>> = mapOf(
         InputAction.UP to listOf(KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_W),
         InputAction.DOWN to listOf(KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_S),
@@ -41,10 +46,13 @@ object InputMapping {
         InputAction.RIGHT to listOf(KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_D),
         InputAction.A to listOf(KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_L),
         InputAction.B to listOf(KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_K),
+        InputAction.X to listOf(KeyEvent.KEYCODE_BUTTON_Y, KeyEvent.KEYCODE_I),
+        InputAction.Y to listOf(KeyEvent.KEYCODE_BUTTON_X, KeyEvent.KEYCODE_J),
         InputAction.L to listOf(KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_Q),
         InputAction.R to listOf(KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_E),
         InputAction.START to listOf(KeyEvent.KEYCODE_BUTTON_START, KeyEvent.KEYCODE_ENTER),
         InputAction.SELECT to listOf(KeyEvent.KEYCODE_BUTTON_SELECT, KeyEvent.KEYCODE_SHIFT_RIGHT),
+        InputAction.MIC to listOf(KeyEvent.KEYCODE_M),
         InputAction.FAST_FORWARD to listOf(KeyEvent.KEYCODE_BUTTON_R2, KeyEvent.KEYCODE_SPACE),
         InputAction.REWIND to listOf(KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_R),
         InputAction.MENU to listOf(KeyEvent.KEYCODE_BUTTON_MODE, KeyEvent.KEYCODE_ESCAPE),

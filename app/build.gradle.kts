@@ -7,56 +7,88 @@ plugins {
 }
 
 // ---------------------------------------------------------------------------
-// mGBA (the emulation core) is downloaded instead of being copied into this
-// repository. It happens automatically the first time Gradle configures the
-// project (also during Android Studio's "Gradle sync").
+// The emulation cores are downloaded instead of being copied into this
+// repository: mGBA (GBA, GB, GBC) and melonDS (DS). It happens automatically
+// the first time Gradle configures the project (also during Android Studio's
+// "Gradle sync").
 // ---------------------------------------------------------------------------
-val mgbaVersion = "0.10.5"
-val mgbaUrl = "https://github.com/mgba-emu/mgba/archive/refs/tags/$mgbaVersion.tar.gz"
-// SHA-256 of the archive above. Leave empty to skip verification.
-val mgbaSha256 = "91d6fbd32abcbdf030d58d3f562de25ebbc9d56040d513ff8e5c19bee9dacf14"
-val mgbaDir: File = rootDir.resolve("third_party/mgba")
-// Bump when the list of extracted files changes, to force a fresh extraction.
-val mgbaMarker = "$mgbaVersion-2"
+class CoreSource(
+    val name: String,
+    val version: String,
+    val url: String,
+    // SHA-256 of the archive. Leave empty to skip verification.
+    val sha256: String,
+    val dir: File,
+    // Bump the suffix when the list of extracted files changes, to force a fresh extraction.
+    val marker: String,
+    val include: List<String>,
+    val exclude: List<String> = emptyList(),
+)
 
-fun ensureMgbaSources() {
-    val marker = mgbaDir.resolve(".mgba-version")
-    if (marker.isFile && marker.readText().trim() == mgbaMarker) return
+val mgba = CoreSource(
+    name = "mGBA",
+    version = "0.10.5",
+    url = "https://github.com/mgba-emu/mgba/archive/refs/tags/0.10.5.tar.gz",
+    sha256 = "91d6fbd32abcbdf030d58d3f562de25ebbc9d56040d513ff8e5c19bee9dacf14",
+    dir = rootDir.resolve("third_party/mgba"),
+    marker = "0.10.5-2",
+    // Only what the native build needs; drops desktop frontends and test media.
+    // README.md and CHANGES are checked by mGBA's CPack setup.
+    include = listOf(
+        "*/CMakeLists.txt", "*/version.cmake", "*/LICENSE", "*/README.md", "*/CHANGES",
+        "*/include/**", "*/src/**", "*/res/licenses/**",
+    ),
+    exclude = listOf(
+        "*/src/platform/qt/**", "*/src/platform/3ds/**", "*/src/platform/wii/**",
+        "*/src/platform/psp2/**", "*/src/platform/switch/**", "*/src/platform/windows/**",
+    ),
+)
 
-    logger.lifecycle("Downloading mGBA $mgbaVersion from $mgbaUrl")
-    val archive = layout.buildDirectory.file("tmp/mgba-$mgbaVersion.tar.gz").get().asFile
+val melonds = CoreSource(
+    name = "melonDS",
+    version = "1.1",
+    url = "https://github.com/melonDS-emu/melonDS/archive/refs/tags/1.1.tar.gz",
+    sha256 = "289b39eef4f6ecdad275af0ea1a314dc8c0ed2fb7209ff4ba138d9f4f72bf3f1",
+    dir = rootDir.resolve("third_party/melonds"),
+    marker = "1.1-1",
+    // The core library only, without the Qt frontend.
+    include = listOf("*/CMakeLists.txt", "*/LICENSE", "*/cmake/**", "*/src/**"),
+    exclude = listOf("*/src/frontend/**"),
+)
+
+fun ensureSources(core: CoreSource) {
+    val marker = core.dir.resolve(".core-version")
+    if (marker.isFile && marker.readText().trim() == core.marker) return
+
+    logger.lifecycle("Downloading ${core.name} ${core.version} from ${core.url}")
+    val archive = layout.buildDirectory.file("tmp/${core.name}-${core.version}.tar.gz").get().asFile
     archive.parentFile.mkdirs()
-    URI(mgbaUrl).toURL().openStream().use { input ->
+    URI(core.url).toURL().openStream().use { input ->
         archive.outputStream().use { output -> input.copyTo(output) }
     }
     val digest = MessageDigest.getInstance("SHA-256")
         .digest(archive.readBytes())
         .joinToString("") { "%02x".format(it) }
-    logger.lifecycle("mGBA archive SHA-256: $digest")
-    if (mgbaSha256.isNotEmpty() && !digest.equals(mgbaSha256, ignoreCase = true)) {
-        throw GradleException("mGBA archive checksum mismatch: expected $mgbaSha256, got $digest")
+    logger.lifecycle("${core.name} archive SHA-256: $digest")
+    if (core.sha256.isNotEmpty() && !digest.equals(core.sha256, ignoreCase = true)) {
+        throw GradleException("${core.name} archive checksum mismatch: expected ${core.sha256}, got $digest")
     }
 
-    delete(mgbaDir)
+    delete(core.dir)
     copy {
         from(tarTree(resources.gzip(archive)))
-        // Only what the native build needs; drops desktop frontends and test media.
-        include(
-            // README.md and CHANGES are checked by mGBA's CPack setup.
-            "*/CMakeLists.txt", "*/version.cmake", "*/LICENSE", "*/README.md", "*/CHANGES",
-            "*/include/**", "*/src/**", "*/res/licenses/**",
-        )
-        exclude("*/src/platform/qt/**", "*/src/platform/3ds/**", "*/src/platform/wii/**",
-            "*/src/platform/psp2/**", "*/src/platform/switch/**", "*/src/platform/windows/**")
-        // Strip the leading "mgba-0.10.5/" directory.
+        include(core.include)
+        exclude(core.exclude)
+        // Strip the leading "name-version/" directory.
         eachFile { relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray()) }
         includeEmptyDirs = false
-        into(mgbaDir)
+        into(core.dir)
     }
-    marker.writeText(mgbaMarker)
+    marker.writeText(core.marker)
 }
 
-ensureMgbaSources()
+ensureSources(mgba)
+ensureSources(melonds)
 
 android {
     namespace = "com.joseluixrax.gbaemu"
@@ -67,16 +99,22 @@ android {
         applicationId = "com.joseluixrax.gbaemu"
         minSdk = 26 // Android 8.0: mGBA needs strtof_l from bionic (API 26+)
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.1.0"
 
         ndk {
             // Real phones (arm64 / older arm) + x86_64 for emulators and Chromebooks.
+            // DS support is built for arm64 and x86_64 only (see src/main/cpp/CMakeLists.txt).
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
         externalNativeBuild {
             cmake {
-                arguments += listOf("-DMGBA_DIR=${mgbaDir.absolutePath}", "-DANDROID_STL=none")
+                arguments += listOf(
+                    "-DMGBA_DIR=${mgba.dir.absolutePath}",
+                    "-DMELONDS_DIR=${melonds.dir.absolutePath}",
+                    // melonDS is C++; its runtime goes inside libndsemu.so.
+                    "-DANDROID_STL=c++_static",
+                )
             }
         }
     }

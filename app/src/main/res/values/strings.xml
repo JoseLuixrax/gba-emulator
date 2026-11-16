@@ -4,7 +4,7 @@
 
     <!-- Library -->
     <string name="library_empty_title">No games yet</string>
-    <string name="library_empty_body">Choose the folder where you keep your ROMs (.gba, .gb, .gbc or .zip). Subfolders are included.</string>
+    <string name="library_empty_body">Choose the folder where you keep your ROMs (.gba, .gb, .gbc, .nds or .zip). Subfolders are included.</string>
     <string name="choose_rom_folder">Choose ROM folder</string>
     <string name="open_rom_file">Open a ROM file</string>
     <string name="refresh">Refresh</string>
@@ -30,7 +30,8 @@
     <!-- Game -->
     <string name="error_title">Cannot start the game</string>
     <string name="error_reading_rom">Could not read the ROM: %1$s</string>
-    <string name="error_not_a_rom">This file is not a Game Boy Advance, Game Boy or Game Boy Color ROM.</string>
+    <string name="error_ds_unsupported">DS games need a phone with a 64-bit processor. This one can still play GBA, GB and GBC games.</string>
+    <string name="error_not_a_rom">This file is not a ROM the app can open (Game Boy Advance, Game Boy, Game Boy Color or Nintendo DS).</string>
     <string name="fps_format">%1$.0f FPS</string>
     <string name="save_state">Save state</string>
     <string name="load_state">Load state</string>
@@ -72,6 +73,9 @@
     <string name="key_right">Right</string>
     <string name="key_a" translatable="false">A</string>
     <string name="key_b" translatable="false">B</string>
+    <string name="key_x" translatable="false">X (DS)</string>
+    <string name="key_y" translatable="false">Y (DS)</string>
+    <string name="key_mic">Microphone (DS)</string>
     <string name="key_l" translatable="false">L</string>
     <string name="key_r" translatable="false">R</string>
     <string name="key_start" translatable="false">START</string>
@@ -153,6 +157,12 @@
     <string name="pref_gb_colorize_summary">Use Game Boy Color palettes for original Game Boy games</string>
     <string name="pref_gyro">Gyroscope sensitivity</string>
     <string name="pref_gyro_summary">For WarioWare: Twisted! (percentage)</string>
+    <string name="pref_cat_ds">Nintendo DS</string>
+    <string name="pref_ds_landscape">Screens in landscape</string>
+    <string name="ds_landscape_stacked">One above the other</string>
+    <string name="ds_landscape_side">Side by side</string>
+    <string name="pref_ds_jit">Fast mode (JIT)</string>
+    <string name="pref_ds_jit_summary">Much faster. Turn it off only if a DS game closes by itself.</string>
     <string name="pref_cat_files">Files</string>
     <string name="saves_folder">Open saves folder</string>
     <string name="pref_open_saves_summary">Your .sav files and save states. They also appear in the Files app as “AdvanceBoy”.</string>
@@ -171,9 +181,9 @@
     <string name="pref_cat_about">About</string>
     <string name="pref_about_summary">Version %1$s · Emulation core: mGBA 0.10.5</string>
     <string name="pref_licenses">Open source licenses</string>
-    <string name="pref_licenses_summary">mGBA, blip_buf, inih</string>
+    <string name="pref_licenses_summary">mGBA, melonDS, blip_buf, inih</string>
     <string name="view_source">Source code</string>
-    <string name="licenses_text">This app uses the mGBA emulation core\nCopyright © 2013–2025 Vicki Pfau and contributors.\nLicensed under the Mozilla Public License 2.0. Its source code is available at github.com/mgba-emu/mgba.\n\nblip_buf © 2003–2009 Shay Green, GNU LGPL 2.1.\ninih © 2009 Ben Hoyt, BSD license.\n\nGame Boy Advance and Game Boy are trademarks of Nintendo. This app is not affiliated with Nintendo and does not include any games or BIOS.</string>
+    <string name="licenses_text">This app uses two emulation cores.\n\nmGBA (GBA, GB and GBC)\nCopyright © 2013-2025 Vicki Pfau and contributors.\nMozilla Public License 2.0. Source code at github.com/mgba-emu/mgba\n\nmelonDS (Nintendo DS)\nCopyright © 2016-2025 melonDS team.\nGNU General Public License v3. Source code at github.com/melonDS-emu/melonDS\nIt includes FreeBIOS (© 2013 Gilead Kutnick, BSD), teakra (MIT), FatFs, xxHash, libslirp, tiny-AES-c and sha1, all under permissive licenses.\n\nSince it includes melonDS, the app as a whole is distributed under the GNU GPL v3. Its full source code is at github.com/JoseLuixrax/gba-emulator\n\nblip_buf © 2003-2009 Shay Green, GNU LGPL 2.1.\ninih © 2009 Ben Hoyt, BSD license.\n\nNintendo DS, Game Boy Advance and Game Boy are trademarks of Nintendo. This app is not affiliated with Nintendo and does not include any games or BIOS.</string>
 
     <!-- Setting values -->
     <string name="filter_sharp">Sharp (recommended)</string>

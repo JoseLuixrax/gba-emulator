@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import androidx.preference.PreferenceManager
+import com.joseluixrax.gbaemu.emulator.DsKeys
 import com.joseluixrax.gbaemu.emulator.GbaKeys
 import java.util.EnumMap
 import kotlin.math.atan2
@@ -21,10 +22,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * The on-screen controller: draws the buttons and turns touches into GBA keys.
+ * The on-screen controller: draws the buttons and turns touches into keys.
  *
- * - Multi-touch, with sliding between A/B/L/R.
+ * - Multi-touch, with sliding between A/B/X/Y/L/R.
  * - 8-way D-pad that keeps tracking the thumb even outside its circle.
+ * - DS games: a finger on the bottom screen (outside the buttons) is the
+ *   stylus.
  * - Edit mode: drag a control to move it, pinch (or +/-) to resize it.
  */
 class VirtualPadView @JvmOverloads constructor(
@@ -37,6 +40,10 @@ class VirtualPadView @JvmOverloads constructor(
         fun onMenuPressed()
         fun onFastForwardButton(down: Boolean)
         fun onRewindButton(down: Boolean)
+
+        /** DS touch screen, in DS pixels (0-255, 0-191). */
+        fun onScreenTouch(x: Int, y: Int) {}
+        fun onScreenRelease() {}
     }
 
     var listener: Listener? = null
@@ -80,6 +87,19 @@ class VirtualPadView @JvmOverloads constructor(
             }
         }
 
+    /** DS game: X, Y and mic buttons, its own layouts, touch screen. */
+    var dsMode = false
+        set(value) {
+            if (field != value) {
+                field = value
+                releaseAll()
+                reloadLayout()
+            }
+        }
+
+    /** Where the DS bottom screen is, in this view's pixels (see [DsScreens]). */
+    var touchScreenArea: (() -> RectF?)? = null
+
     var editMode = false
         set(value) {
             field = value
@@ -96,6 +116,10 @@ class VirtualPadView @JvmOverloads constructor(
     private class Touch(var element: PadElement?, var keys: Int = 0)
 
     private val touches = HashMap<Int, Touch>()
+
+    // The finger acting as the DS stylus, and the screen area it started in.
+    private var stylusPointer = -1
+    private var stylusArea: RectF? = null
     private val pressed = HashSet<PadElement>()
     private var currentKeys = 0
 
@@ -144,19 +168,19 @@ class VirtualPadView @JvmOverloads constructor(
     /** Re-reads the saved layout for the current orientation. */
     fun reloadLayout() {
         if (width == 0 || height == 0) return
-        layout = PadLayout.load(prefs, width, height)
+        layout = PadLayout.load(prefs, width, height, dsMode)
         computeRects()
         invalidate()
     }
 
     fun saveLayout() {
         if (width == 0 || height == 0) return
-        PadLayout.save(prefs, width > height, layout)
+        PadLayout.save(prefs, width > height, dsMode, layout)
     }
 
     fun resetLayoutToDefaults() {
         if (width == 0 || height == 0) return
-        layout = PadLayout.defaults(width, height)
+        layout = PadLayout.defaults(width, height, dsMode)
         computeRects()
         invalidate()
     }
@@ -183,7 +207,11 @@ class VirtualPadView @JvmOverloads constructor(
         }
     }
 
-    private fun isShown(element: PadElement) = element != PadElement.REWIND || showRewind
+    private fun isShown(element: PadElement) = when (element) {
+        PadElement.REWIND -> showRewind && !dsMode
+        PadElement.X, PadElement.Y, PadElement.MIC -> dsMode
+        else -> true
+    }
 
     // ---------------------------------------------------------------- drawing
 
@@ -293,29 +321,64 @@ class VirtualPadView @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (editMode) return onEditTouch(event)
-        if (!padVisible) padVisible = true
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val i = event.actionIndex
-                val touch = Touch(hitTest(event.getX(i), event.getY(i), PadElement.entries))
-                touches[event.getPointerId(i)] = touch
-                onTouchStart(touch)
-                updateTouch(touch, event.getX(i), event.getY(i))
+                val x = event.getX(i)
+                val y = event.getY(i)
+                val screen = if (dsMode && stylusPointer == -1) touchScreenArea?.invoke() else null
+                val onScreen = screen != null && screen.contains(x, y)
+                // Buttons drawn over the screen win, unless they're hidden.
+                val element = if (onScreen && !padVisible) null else hitTest(x, y, PadElement.entries)
+                if (element == null && onScreen) {
+                    stylusPointer = event.getPointerId(i)
+                    stylusArea = screen
+                    moveStylus(x, y)
+                } else {
+                    if (!padVisible) padVisible = true
+                    val touch = Touch(element)
+                    touches[event.getPointerId(i)] = touch
+                    onTouchStart(touch)
+                    updateTouch(touch, x, y)
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 for (i in 0 until event.pointerCount) {
-                    val touch = touches[event.getPointerId(i)] ?: continue
+                    val id = event.getPointerId(i)
+                    if (id == stylusPointer) {
+                        moveStylus(event.getX(i), event.getY(i))
+                        continue
+                    }
+                    val touch = touches[id] ?: continue
                     updateTouch(touch, event.getX(i), event.getY(i))
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
-                touches.remove(event.getPointerId(event.actionIndex))?.let { onTouchEnd(it) }
+                val id = event.getPointerId(event.actionIndex)
+                if (id == stylusPointer) releaseStylus()
+                touches.remove(id)?.let { onTouchEnd(it) }
             }
             MotionEvent.ACTION_CANCEL -> releaseAll()
         }
         publishKeys()
         return true
+    }
+
+    /** Finger position -> DS pixels; outside the screen it sticks to the edge. */
+    private fun moveStylus(x: Float, y: Float) {
+        val area = stylusArea ?: return
+        if (area.width() <= 0f || area.height() <= 0f) return
+        val dsX = ((x - area.left) / area.width() * 256f).toInt().coerceIn(0, 255)
+        val dsY = ((y - area.top) / area.height() * 192f).toInt().coerceIn(0, 191)
+        listener?.onScreenTouch(dsX, dsY)
+    }
+
+    private fun releaseStylus() {
+        if (stylusPointer == -1) return
+        stylusPointer = -1
+        stylusArea = null
+        listener?.onScreenRelease()
     }
 
     private fun onTouchStart(touch: Touch) {
@@ -350,7 +413,7 @@ class VirtualPadView @JvmOverloads constructor(
                 touch.keys = dpadKeys(rects[PadElement.DPAD] ?: return, x, y)
             }
             PadElement.MENU, PadElement.FAST_FORWARD, PadElement.REWIND -> touch.keys = 0
-            PadElement.START, PadElement.SELECT -> touch.keys = keyFor(touch.element)
+            PadElement.START, PadElement.SELECT, PadElement.MIC -> touch.keys = keyFor(touch.element)
             else -> {
                 // Face and shoulder buttons: the finger may slide to a neighbour.
                 touch.element = hitTest(x, y, SLIDABLE)
@@ -360,6 +423,7 @@ class VirtualPadView @JvmOverloads constructor(
     }
 
     private fun releaseAll() {
+        releaseStylus()
         touches.values.forEach { onTouchEnd(it) }
         touches.clear()
         if (currentKeys != 0 || pressed.isNotEmpty()) {
@@ -401,6 +465,9 @@ class VirtualPadView @JvmOverloads constructor(
         PadElement.R -> GbaKeys.R
         PadElement.START -> GbaKeys.START
         PadElement.SELECT -> GbaKeys.SELECT
+        PadElement.X -> DsKeys.X
+        PadElement.Y -> DsKeys.Y
+        PadElement.MIC -> DsKeys.MIC
         else -> 0
     }
 
@@ -487,6 +554,6 @@ class VirtualPadView @JvmOverloads constructor(
     }
 
     private companion object {
-        val SLIDABLE = listOf(PadElement.A, PadElement.B, PadElement.L, PadElement.R)
+        val SLIDABLE = listOf(PadElement.A, PadElement.B, PadElement.X, PadElement.Y, PadElement.L, PadElement.R)
     }
 }

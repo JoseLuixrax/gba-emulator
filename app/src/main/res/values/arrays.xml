@@ -44,6 +44,15 @@
         <item>landscape</item>
     </string-array>
 
+    <string-array name="ds_landscape_entries">
+        <item>@string/ds_landscape_stacked</item>
+        <item>@string/ds_landscape_side</item>
+    </string-array>
+    <string-array name="ds_landscape_values" translatable="false">
+        <item>stacked</item>
+        <item>side</item>
+    </string-array>
+
     <string-array name="frameskip_entries">
         <item>@string/frameskip_off</item>
         <item>@string/frameskip_1</item>

@@ -1,9 +1,12 @@
-# Native part of the app: the mGBA core plus our small JNI bridge.
+# Native part of the app: two emulation cores, each in its own library so
+# they never share symbols.
+#   libgbaemu.so  mGBA (GBA, GB, GBC) + emu_core.c / jni_bridge.c
+#   libndsemu.so  melonDS (DS)        + nds/
 #
-# mGBA's source is not stored in this repository. Gradle downloads it into
-# third_party/mgba while configuring the project and passes it as MGBA_DIR.
+# Neither core is stored in this repository. Gradle downloads them into
+# third_party/ while configuring the project and passes MGBA_DIR / MELONDS_DIR.
 cmake_minimum_required(VERSION 3.18)
-project(gbaemu C)
+project(gbaemu C CXX)
 
 if(NOT MGBA_DIR)
 	set(MGBA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/mgba")
@@ -12,11 +15,20 @@ get_filename_component(MGBA_DIR "${MGBA_DIR}" ABSOLUTE)
 if(NOT EXISTS "${MGBA_DIR}/CMakeLists.txt")
 	message(FATAL_ERROR "mGBA source not found in ${MGBA_DIR}. Run any Gradle build (e.g. ./gradlew help): app/build.gradle.kts downloads it.")
 endif()
+if(NOT MELONDS_DIR)
+	set(MELONDS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/melonds")
+endif()
+get_filename_component(MELONDS_DIR "${MELONDS_DIR}" ABSOLUTE)
+if(NOT EXISTS "${MELONDS_DIR}/src/NDS.h")
+	message(FATAL_ERROR "melonDS source not found in ${MELONDS_DIR}. Run any Gradle build (e.g. ./gradlew help): app/build.gradle.kts downloads it.")
+endif()
 
 # The emulator must be fast even in Debug builds, otherwise games run at a
 # fraction of full speed. Keep debug info but always optimise.
 set(CMAKE_C_FLAGS_DEBUG "-O2 -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 # libmgba is linked into a shared library, so it must be position independent.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -29,6 +41,22 @@ set(M_CORE_GBA ON)
 set(M_CORE_GB ON)
 add_subdirectory("${MGBA_DIR}" mgba EXCLUDE_FROM_ALL)
 
+# melonDS: only its core library (software 3D, no Qt, no OpenGL, no debugger).
+# Its JIT recompiler is on where melonDS has one (ARM64 and x86_64). Phones
+# with only 32-bit ARM get no DS support: without a JIT it would be far too
+# slow, so the library isn't built for them at all.
+if(ANDROID AND ANDROID_ABI STREQUAL "armeabi-v7a")
+	set(WITH_NDS OFF)
+else()
+	set(WITH_NDS ON)
+	set(BUILD_QT_SDL OFF CACHE BOOL "" FORCE)
+	set(ENABLE_OGLRENDERER OFF CACHE BOOL "" FORCE)
+	set(ENABLE_GDBSTUB OFF CACHE BOOL "" FORCE)
+	set(ENABLE_LTO_RELEASE OFF CACHE BOOL "" FORCE)
+	add_subdirectory("${MELONDS_DIR}" melonds EXCLUDE_FROM_ALL)
+	set(NDS_SOURCES nds/nds_core.cpp nds/nds_platform.cpp)
+endif()
+
 if(ANDROID)
 	add_library(gbaemu SHARED emu_core.c jni_bridge.c)
 	target_link_libraries(gbaemu PRIVATE mgba log)
@@ -38,10 +66,23 @@ if(ANDROID)
 	target_link_options(gbaemu PRIVATE "-Wl,--exclude-libs,ALL" "-Wl,--gc-sections")
 	# 16 KB page size support (required for new apps on Android 15+ devices).
 	target_link_options(gbaemu PRIVATE "-Wl,-z,max-page-size=16384")
+
+	if(WITH_NDS)
+		add_library(ndsemu SHARED ${NDS_SOURCES} nds/jni_nds.cpp)
+		target_link_libraries(ndsemu PRIVATE core log dl)
+		set_target_properties(ndsemu PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
+		target_link_options(ndsemu PRIVATE "-Wl,--exclude-libs,ALL" "-Wl,--gc-sections" "-Wl,-z,max-page-size=16384")
+	endif()
 else()
-	# Desktop build used by native-test/ to exercise the core without a phone.
+	# Desktop builds used by native-test/ to exercise the cores without a phone.
 	add_library(gbaemu STATIC emu_core.c)
 	target_link_libraries(gbaemu PUBLIC mgba)
+	add_library(ndsemu STATIC ${NDS_SOURCES})
+	target_link_libraries(ndsemu PUBLIC core dl pthread)
+endif()
+if(WITH_NDS)
+	target_include_directories(ndsemu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/nds")
+	target_compile_options(ndsemu PRIVATE -Wall -Wno-unused-parameter)
 endif()
 
 target_include_directories(gbaemu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

@@ -74,7 +74,7 @@ class SettingsActivity : AppCompatActivity() {
                     .setMessage(R.string.licenses_text)
                     .setPositiveButton(android.R.string.ok, null)
                     .setNeutralButton(R.string.view_source) { _, _ ->
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(MGBA_SOURCE_URL)))
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_URL)))
                     }
                     .show()
                 true
@@ -136,6 +136,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private companion object {
         const val GBA_BIOS_SIZE = 16 * 1024
-        const val MGBA_SOURCE_URL = "https://github.com/mgba-emu/mgba"
+        // This app's own code (GPL v3, it includes melonDS), with links to both cores.
+        const val SOURCE_URL = "https://github.com/JoseLuixrax/gba-emulator"
     }
 }
