@@ -31,12 +31,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # -f and retries: a GitHub hiccup must fail or retry the download,
+      # never hand an error page to tar.
       - name: Download mGBA and melonDS sources
         run: |
           mkdir -p third_party
-          curl -sSL "https://github.com/mgba-emu/mgba/archive/refs/tags/${MGBA_VERSION}.tar.gz" | tar xz -C third_party
+          fetch() { curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o "$2" "$1"; }
+          fetch "https://github.com/mgba-emu/mgba/archive/refs/tags/${MGBA_VERSION}.tar.gz" mgba.tar.gz
+          fetch "https://github.com/melonDS-emu/melonDS/archive/refs/tags/${MELONDS_VERSION}.tar.gz" melonds.tar.gz
+          tar xzf mgba.tar.gz -C third_party
+          tar xzf melonds.tar.gz -C third_party
           mv "third_party/mgba-${MGBA_VERSION}" third_party/mgba
-          curl -sSL "https://github.com/melonDS-emu/melonDS/archive/refs/tags/${MELONDS_VERSION}.tar.gz" | tar xz -C third_party
           mv "third_party/melonDS-${MELONDS_VERSION}" third_party/melonds
 
       - name: Build test harness

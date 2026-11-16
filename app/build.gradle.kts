@@ -63,8 +63,20 @@ fun ensureSources(core: CoreSource) {
     logger.lifecycle("Downloading ${core.name} ${core.version} from ${core.url}")
     val archive = layout.buildDirectory.file("tmp/${core.name}-${core.version}.tar.gz").get().asFile
     archive.parentFile.mkdirs()
-    URI(core.url).toURL().openStream().use { input ->
-        archive.outputStream().use { output -> input.copyTo(output) }
+    // A few tries: GitHub sometimes fails a download for a moment.
+    var attempt = 1
+    while (true) {
+        try {
+            URI(core.url).toURL().openStream().use { input ->
+                archive.outputStream().use { output -> input.copyTo(output) }
+            }
+            break
+        } catch (e: java.io.IOException) {
+            if (attempt >= 4) throw e
+            logger.warn("Download failed (${e.message}), retrying")
+            Thread.sleep(5000L * attempt)
+            attempt++
+        }
     }
     val digest = MessageDigest.getInstance("SHA-256")
         .digest(archive.readBytes())
