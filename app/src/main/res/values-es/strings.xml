@@ -83,7 +83,7 @@
     <string name="reset_defaults">Valores por defecto</string>
 
     <!-- Trucos -->
-    <string name="cheats_empty">Todavía no hay trucos.\nToca «Añadir truco» para escribir un código GameShark, Action Replay o CodeBreaker.</string>
+    <string name="cheats_empty">Todavía no hay trucos.\nToca «Añadir truco» para escribir un código GameShark, Action Replay o CodeBreaker (Action Replay DS en los juegos de DS).</string>
     <string name="add_cheat">Añadir truco</string>
     <string name="edit_cheat">Editar truco</string>
     <string name="cheat_name">Nombre</string>
@@ -98,6 +98,8 @@
     <string name="cheat_type_raw">Directo (dirección:valor)</string>
     <string name="cheat_help_gba">Formatos: GameShark / Action Replay «XXXXXXXX YYYYYYYY», CodeBreaker «XXXXXXXX YYYY», directo «AAAAAAAA:VV». Los espacios son opcionales.</string>
     <string name="cheat_help_gb">Formatos: GameShark «01VVAAAA», Game Genie «VVA-AAA-CCC», directo «AAAA:VV».</string>
+    <string name="cheat_help_ds">Códigos Action Replay DS: «XXXXXXXX YYYYYYYY», una pareja por línea. Los espacios son opcionales.</string>
+    <string name="cheat_invalid_ds">Eso no parece un código Action Replay DS: deben ser parejas de números hexadecimales de 8 cifras.</string>
 
     <!-- Ajustes -->
     <string name="pref_cat_video">Vídeo</string>
@@ -133,7 +135,7 @@
     <string name="pref_ff_audio">Sonido en avance rápido / cámara lenta</string>
     <string name="pref_ff_audio_summary">La música va a la misma velocidad que el juego, acelerada o lenta (no con «Sin límite»)</string>
     <string name="pref_rewind">Rebobinar</string>
-    <string name="pref_rewind_summary">Añade un botón para rebobinar. Usa más memoria y batería.</string>
+    <string name="pref_rewind_summary">Añade un botón para rebobinar. Usa más memoria y batería, y en DS también algo de velocidad.</string>
     <string name="pref_rewind_seconds">Duración del rebobinado</string>
     <string name="pref_auto_save">Guardar estado al salir</string>
     <string name="pref_auto_save_summary">Guarda dónde estás cuando sales del juego</string>

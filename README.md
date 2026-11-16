@@ -17,11 +17,11 @@ Necesita Android 8.0 o superior. Para los juegos de DS hace falta además un mó
 ## Qué tiene
 
 - Lista de juegos a partir de una carpeta del móvil (`.gba`, `.gb`, `.gbc`, `.nds` y `.zip`, también en subcarpetas), con los últimos que has jugado arriba.
-- Juegos de DS con las dos pantallas, la táctil se usa con el dedo, botones X e Y y un botón para soplar al micrófono. Más abajo hay un apartado solo para DS.
+- Juegos de DS con las dos pantallas, la táctil se usa con el dedo, botones X e Y y un botón para soplar al micrófono, y también con estados, trucos y rebobinado. Más abajo hay un apartado solo para DS.
 - 10 ranuras de estado con miniatura y fecha, más un guardado automático al salir para seguir donde lo dejaste.
 - Avance rápido de x2 a x8 y cámara lenta de x0,1 a x0,5. La música va a la misma velocidad que el juego.
 - Rebobinar (se activa en ajustes).
-- Trucos GameShark, Action Replay y CodeBreaker. En Game Boy, GameShark y Game Genie.
+- Trucos GameShark, Action Replay y CodeBreaker. En Game Boy, GameShark y Game Genie. En DS, Action Replay DS.
 - Controles táctiles que puedes mover y cambiar de tamaño, por separado en vertical y en horizontal.
 - Mandos Bluetooth o USB y teclado, con los botones configurables.
 - Filtros de imagen (nítido, pixelado, suavizado), líneas de escaneo, rejilla LCD y colores como los de la pantalla original de la GBA.
@@ -51,8 +51,9 @@ Se abren igual que los de GBA, desde la misma lista. No hace falta BIOS ni firmw
 - La partida se guarda sola en cuanto el juego termina de escribirla, y también al salir o al cambiar de app.
 - El avance rápido y la cámara lenta funcionan igual que en GBA, con la música a la misma velocidad.
 - El modo rápido (JIT) viene activado porque hace que los juegos vayan mucho mejor. Si algún juego se cierra solo al abrirlo, prueba a quitarlo en Ajustes > Nintendo DS.
-
-De momento en DS no hay estados guardados, trucos ni rebobinado. Están en la lista de pendientes.
+- Los estados funcionan igual que en GBA: 10 ranuras con miniatura (de la pantalla de arriba) y el automático al salir. Van comprimidos, así que ocupan bastante menos que los ~19 MB que mide un estado de DS por dentro. Si tienes un estado de melonDS 1.1 de PC (`.mln`), también se puede cargar: cópialo a `states/<juego>/` con el nombre `slot1.state` (o el número que quieras) y sale en esa ranura.
+- Los trucos son códigos Action Replay DS, de los de toda la vida: parejas de números de 8 cifras, una por línea. Si te equivocas al copiarlo, la app te avisa antes de guardarlo.
+- El rebobinado en DS guarda una foto del juego cada 6 fotogramas y al mantener el botón « vuelve atrás al doble de velocidad. Una foto de DS pesa mucho más que una de GBA, así que la app guarda solo los cambios entre una y otra y el historial no pasa de unos 100 MB de memoria; según el juego eso da para más o menos segundos. En móviles justos de potencia se nota algo en la velocidad, así que si no lo usas, mejor dejarlo apagado.
 
 ## Dónde se guardan las partidas
 
@@ -146,11 +147,10 @@ cmake --build build/native-test -j
 
 El primero ejecuta las ROMs de `native-test/roms` ([gba-tests de jsmolka](https://github.com/jsmolka/gba-tests), licencia MIT), comprueba imagen, audio, estados, partidas Flash y SRAM, rebobinado, trucos y velocidades, y guarda una captura de cada una.
 
-El segundo arranca una ROM de DS casera hecha solo para esto (el código está en `native-test/nds-rom` y se genera con `build.py`) y comprueba las dos pantallas, los botones, el audio a cada velocidad, la carga desde archivo y que la partida se guarde bien.
+El segundo arranca una ROM de DS casera hecha solo para esto (el código está en `native-test/nds-rom` y se genera con `build.py`) y comprueba las dos pantallas, los botones, el audio a cada velocidad, la carga desde archivo, que la partida se guarde bien, los estados (también los `.mln` de melonDS y que uno roto no estropee la partida), el rebobinado y los trucos Action Replay. La ROM lleva un contador de fotogramas en memoria que se pinta en pantalla, y así se ve si un estado o el rebobinado vuelven de verdad al momento correcto.
 
 ## Pendiente
 
-- DS: estados guardados, trucos y rebobinado.
 - DS: más disposiciones de pantalla (una grande y otra pequeña, intercambiarlas).
 - Cable link por wifi para jugar a dobles o intercambiar Pokémon entre dos móviles.
 - Botones turbo y combinaciones tipo A+B.

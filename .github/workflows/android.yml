@@ -46,6 +46,8 @@ jobs:
 
       - name: Build test harness
         run: |
+          # DS states are zlib compressed; the runner image normally has it.
+          test -f /usr/include/zlib.h || { sudo apt-get update && sudo apt-get install -y zlib1g-dev; }
           cmake -S native-test -B build/native-test -DCMAKE_BUILD_TYPE=Release \
             -DMGBA_DIR="$PWD/third_party/mgba" -DMELONDS_DIR="$PWD/third_party/melonds"
           cmake --build build/native-test -j"$(nproc)"

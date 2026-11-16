@@ -169,7 +169,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
 
     override fun onStop() {
         super.onStop()
-        if (gameLoaded && !isDs && prefs.autoSaveState) saveState(GameFiles.AUTO_SLOT, quiet = true)
+        if (gameLoaded && prefs.autoSaveState) saveState(GameFiles.AUTO_SLOT, quiet = true)
     }
 
     override fun onDestroy() {
@@ -216,62 +216,64 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
                 showFatalError(getString(R.string.error_reading_rom, e.message ?: e.javaClass.simpleName))
                 return@launch
             }
-            when (rom) {
-                is RomLoader.Rom.Gba -> startGba(rom)
-                is RomLoader.Rom.Nds -> startDs(rom)
+            if (rom is RomLoader.Rom.Nds && !NdsBridge.available) {
+                rom.cleanUp()
+                showFatalError(getString(R.string.error_ds_unsupported))
+                return@launch
+            }
+            isDs = rom is RomLoader.Rom.Nds
+            val autoState = files.stateFile(GameFiles.AUTO_SLOT)
+            val loadAuto = prefs.autoLoadState && autoState.isFile
+            val cheats = withContext(Dispatchers.IO) { cheatStore.load() }
+            appliedCheats = cheats.map { it.copy() }
+
+            emulator.post {
+                val ok = when (rom) {
+                    is RomLoader.Rom.Gba -> loadGba(rom)
+                    is RomLoader.Rom.Nds -> loadDs(rom)
+                }
+                var restored = false
+                var hw = 0
+                var loadedPlatform = NativeBridge.PLATFORM_NONE
+                if (ok) {
+                    val core = if (isDs) NdsCore else GbaCore
+                    emulator.core = core
+                    if (isDs) {
+                        loadedPlatform = NativeBridge.PLATFORM_DS
+                    } else {
+                        hw = NativeBridge.hardware()
+                        loadedPlatform = NativeBridge.platform()
+                    }
+                    applyCheats(cheats)
+                    if (loadAuto) restored = core.loadState(autoState.path)
+                }
+                runOnUiThread { onGameLoaded(ok, hw, loadedPlatform, restored) }
             }
         }
     }
 
-    private suspend fun startGba(rom: RomLoader.Rom.Gba) {
-        val bios = GameFiles.biosFile(this@GameActivity).takeIf { it.isFile }?.path
-        val autoState = files.stateFile(GameFiles.AUTO_SLOT)
-        val loadAuto = prefs.autoLoadState && autoState.isFile
-        val cheats = withContext(Dispatchers.IO) { cheatStore.load() }
-        appliedCheats = cheats.map { it.copy() }
-
-        emulator.post {
-            val ok = NativeBridge.loadRom(
-                rom.data, files.saveFile.path, bios, audio.sampleRate,
-                prefs.skipBios, prefs.frameskip, prefs.idleLoopDetect, prefs.gbColorize,
-            )
-            var restored = false
-            var hw = 0
-            var loadedPlatform = NativeBridge.PLATFORM_NONE
-            if (ok) {
-                emulator.core = GbaCore
-                hw = NativeBridge.hardware()
-                loadedPlatform = NativeBridge.platform()
-                applyCheats(cheats)
-                if (loadAuto) restored = NativeBridge.loadState(autoState.path)
-            }
-            runOnUiThread { onGameLoaded(ok, hw, loadedPlatform, restored) }
-        }
+    /** Emulator thread. */
+    private fun loadGba(rom: RomLoader.Rom.Gba): Boolean {
+        val bios = GameFiles.biosFile(this).takeIf { it.isFile }?.path
+        return NativeBridge.loadRom(
+            rom.data, files.saveFile.path, bios, audio.sampleRate,
+            prefs.skipBios, prefs.frameskip, prefs.idleLoopDetect, prefs.gbColorize,
+        )
     }
 
-    private fun startDs(rom: RomLoader.Rom.Nds) {
-        if (!NdsBridge.available) {
-            rom.cleanUp()
-            showFatalError(getString(R.string.error_ds_unsupported))
-            return
-        }
-        isDs = true
+    /** Emulator thread. */
+    private fun loadDs(rom: RomLoader.Rom.Nds): Boolean {
         // melonDS keeps nothing important here, but it wants a folder of its own.
         val dataDir = File(filesDir, "nds").apply { mkdirs() }
         val language = NdsBridge.languageFor(Locale.getDefault())
-        val useJit = prefs.dsJit
-        emulator.post {
-            val ok = try {
-                rom.open().use { fd ->
-                    NdsBridge.loadRomFd(fd.fd, files.saveFile.path, dataDir.path, audio.sampleRate, language, useJit)
-                }
-            } catch (e: Exception) {
-                false
-            } finally {
-                rom.cleanUp()
+        return try {
+            rom.open().use { fd ->
+                NdsBridge.loadRomFd(fd.fd, files.saveFile.path, dataDir.path, audio.sampleRate, language, prefs.dsJit)
             }
-            if (ok) emulator.core = NdsCore
-            runOnUiThread { onGameLoaded(ok, 0, NativeBridge.PLATFORM_NONE, false) }
+        } catch (e: Exception) {
+            false
+        } finally {
+            rom.cleanUp()
         }
     }
 
@@ -341,7 +343,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             globalScale = prefs.padScale / 100f
             hapticsEnabled = prefs.haptics
             diagonals = prefs.dpadDiagonals
-            showRewind = prefs.rewindEnabled && !isDs
+            showRewind = prefs.rewindEnabled
         }
         fastForwardToggleMode = prefs.fastForwardToggle
         emulator.fastForwardSpeed = prefs.fastForwardSpeed
@@ -355,15 +357,18 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
 
-        if (gameLoaded && !isDs) {
+        if (gameLoaded) {
             val frameskip = prefs.frameskip
             val newRewind = prefs.rewindEnabled to prefs.rewindSeconds
             val rewindChanged = newRewind != rewindConfig
             rewindConfig = newRewind
+            val ds = isDs
             emulator.post {
-                NativeBridge.setFrameskip(frameskip)
+                val core = emulator.core
+                if (!ds) NativeBridge.setFrameskip(frameskip)
                 if (rewindChanged) {
-                    NativeBridge.setRewind(newRewind.first, newRewind.second * 60 / REWIND_INTERVAL, REWIND_INTERVAL)
+                    val interval = core.rewindInterval
+                    core.setRewind(newRewind.first, newRewind.second * 60 / interval, interval)
                 }
             }
         }
@@ -426,7 +431,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     }
 
     override fun onRewindButton(down: Boolean) {
-        emulator.rewinding = down && prefs.rewindEnabled && !isDs
+        emulator.rewinding = down && prefs.rewindEnabled
     }
 
     override fun onScreenTouch(x: Int, y: Int) {
@@ -536,11 +541,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         updatePaused()
 
         val entries = mutableListOf<Pair<String, () -> Unit>>()
-        // Save states, cheats and rewind aren't available for DS games yet.
-        if (!isDs) {
-            entries += getString(R.string.save_state) to { showStateDialog(saving = true) }
-            entries += getString(R.string.load_state) to { showStateDialog(saving = false) }
-        }
+        entries += getString(R.string.save_state) to { showStateDialog(saving = true) }
+        entries += getString(R.string.load_state) to { showStateDialog(saving = false) }
         val slowMotion = prefs.fastForwardSpeed.let { it > 0f && it < 1f }
         val speedLabel = when {
             slowMotion && fastForwardOn -> R.string.slow_motion_off
@@ -552,11 +554,9 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             setFastForward(!fastForwardOn)
             closeMenu()
         }
-        if (!isDs) {
-            entries += getString(R.string.cheats) to {
-                closeMenu()
-                startActivity(CheatsActivity.intent(this, gameName, platform))
-            }
+        entries += getString(R.string.cheats) to {
+            closeMenu()
+            startActivity(CheatsActivity.intent(this, gameName, platform))
         }
         entries += getString(R.string.screenshot) to {
             takeScreenshot()
@@ -640,12 +640,15 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     // ----------------------------------------------------- states & files
 
     private fun saveState(slot: Int, quiet: Boolean = false) {
-        if (!gameLoaded || isDs) return
-        val thumbnail = frameBuffer.toBitmap()
+        if (!gameLoaded) return
+        val thumbnail = frameBuffer.toBitmap()?.let { frame ->
+            // DS: the top screen alone, which fits the 3:2 thumbnail boxes.
+            if (isDs) Bitmap.createBitmap(frame, 0, 0, frame.width, frame.height / 2) else frame
+        }
         val stateFile = files.stateFile(slot)
         val thumbFile = files.thumbnailFile(slot)
         emulator.post {
-            val ok = NativeBridge.saveState(stateFile.path)
+            val ok = emulator.core.saveState(stateFile.path)
             if (ok && thumbnail != null) writePng(thumbnail, thumbFile)
             if (!quiet) {
                 runOnUiThread {
@@ -656,14 +659,14 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     }
 
     private fun loadState(slot: Int) {
-        if (!gameLoaded || isDs) return
+        if (!gameLoaded) return
         val stateFile = files.stateFile(slot)
         if (!stateFile.isFile) {
             toast(getString(R.string.slot_empty))
             return
         }
         emulator.post {
-            val ok = NativeBridge.loadState(stateFile.path)
+            val ok = emulator.core.loadState(stateFile.path)
             if (ok) frameBuffer.captureFromCore(emulator.core)
             runOnUiThread {
                 binding.gameView.requestRender()
@@ -722,9 +725,11 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
 
     // ---------------------------------------------------------------- cheats
 
+    /** Emulator thread. */
     private fun applyCheats(cheats: List<Cheat>) {
-        NativeBridge.cheatsClear()
-        for (cheat in cheats) NativeBridge.cheatsAdd(cheat.name, cheat.code, cheat.type, cheat.enabled)
+        val core = emulator.core
+        core.cheatsClear()
+        for (cheat in cheats) core.cheatsAdd(cheat.name, cheat.code, cheat.type, cheat.enabled)
     }
 
     private fun reapplyCheatsIfChanged() {
@@ -769,7 +774,6 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     companion object {
         const val EXTRA_DISPLAY_NAME = "display_name"
         private const val QUICK_SLOT = 1
-        private const val REWIND_INTERVAL = 2
 
         fun intent(context: Context, rom: Uri, displayName: String): Intent =
             Intent(context, GameActivity::class.java)

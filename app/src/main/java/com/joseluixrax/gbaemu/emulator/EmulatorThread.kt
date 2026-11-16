@@ -214,7 +214,8 @@ class EmulatorThread(
             publishFrame(1)
         }
         core.discardAudio()
-        return pace(nextFrameTime)
+        // One snapshot per half interval: twice the normal speed, backwards.
+        return pace(nextFrameTime, core.frameNanos * core.rewindInterval / 2)
     }
 
     private fun publishFrame(emulatedFrames: Int) {

@@ -1,6 +1,7 @@
 package com.joseluixrax.gbaemu.ui.cheats
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,6 +16,7 @@ import com.joseluixrax.gbaemu.R
 import com.joseluixrax.gbaemu.cheats.Cheat
 import com.joseluixrax.gbaemu.cheats.CheatStore
 import com.joseluixrax.gbaemu.cheats.CheatType
+import com.joseluixrax.gbaemu.cheats.DsCheatFormat
 import com.joseluixrax.gbaemu.databinding.ActivityCheatsBinding
 import com.joseluixrax.gbaemu.databinding.DialogCheatBinding
 import com.joseluixrax.gbaemu.databinding.ItemCheatBinding
@@ -31,10 +33,13 @@ class CheatsActivity : AppCompatActivity() {
     private lateinit var cheats: MutableList<Cheat>
     private val adapter = CheatAdapter()
     private var isGameBoy = false
+    private var isDs = false
 
     /** Cheat formats offered for the current system, as (label, CheatType). */
     private val types: List<Pair<Int, Int>> by lazy {
-        if (isGameBoy) {
+        if (isDs) {
+            listOf(R.string.cheat_type_action_replay_ds to CheatType.ACTION_REPLAY)
+        } else if (isGameBoy) {
             listOf(
                 R.string.cheat_type_auto to CheatType.AUTO,
                 R.string.cheat_type_gameshark to CheatType.GAMESHARK,
@@ -61,7 +66,9 @@ class CheatsActivity : AppCompatActivity() {
             finish()
             return
         }
-        isGameBoy = intent.getIntExtra(EXTRA_PLATFORM, NativeBridge.PLATFORM_GBA) == NativeBridge.PLATFORM_GB
+        val platform = intent.getIntExtra(EXTRA_PLATFORM, NativeBridge.PLATFORM_GBA)
+        isGameBoy = platform == NativeBridge.PLATFORM_GB
+        isDs = platform == NativeBridge.PLATFORM_DS
         store = CheatStore(this, gameKey)
         cheats = store.load()
 
@@ -88,33 +95,27 @@ class CheatsActivity : AppCompatActivity() {
         val labels = types.map { getString(it.first) }
         dialogBinding.typeSpinner.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
-        dialogBinding.formatHelp.setText(if (isGameBoy) R.string.cheat_help_gb else R.string.cheat_help_gba)
+        dialogBinding.formatHelp.setText(
+            when {
+                isDs -> R.string.cheat_help_ds
+                isGameBoy -> R.string.cheat_help_gb
+                else -> R.string.cheat_help_gba
+            },
+        )
+        // Only one format (DS): nothing to choose.
+        dialogBinding.typeLabel.isVisible = types.size > 1
+        dialogBinding.typeSpinner.isVisible = types.size > 1
         if (cheat != null) {
             dialogBinding.nameInput.setText(cheat.name)
             dialogBinding.codeInput.setText(cheat.code)
             dialogBinding.typeSpinner.setSelection(types.indexOfFirst { it.second == cheat.type }.coerceAtLeast(0))
         }
 
+        // Saving is handled after show(), so a mistyped DS code keeps the dialog open.
         val builder = MaterialAlertDialogBuilder(this)
             .setTitle(if (cheat == null) R.string.add_cheat else R.string.edit_cheat)
             .setView(dialogBinding.root)
-            .setPositiveButton(R.string.save) { _, _ ->
-                val code = dialogBinding.codeInput.text?.toString()?.trim().orEmpty()
-                if (code.isEmpty()) return@setPositiveButton
-                val name = dialogBinding.nameInput.text?.toString()?.trim().orEmpty()
-                    .ifEmpty { getString(R.string.cheat_default_name, cheats.size + 1) }
-                val type = types[dialogBinding.typeSpinner.selectedItemPosition.coerceAtLeast(0)].second
-                if (cheat == null) {
-                    cheats.add(Cheat(name, code, type, enabled = true))
-                    adapter.notifyItemInserted(cheats.size - 1)
-                } else {
-                    cheat.name = name
-                    cheat.code = code
-                    cheat.type = type
-                    adapter.notifyItemChanged(cheats.indexOf(cheat))
-                }
-                persist()
-            }
+            .setPositiveButton(R.string.save, null)
             .setNegativeButton(android.R.string.cancel, null)
         if (cheat != null) {
             builder.setNeutralButton(R.string.delete) { _, _ ->
@@ -126,7 +127,32 @@ class CheatsActivity : AppCompatActivity() {
                 }
             }
         }
-        builder.show()
+        val dialog = builder.show()
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+            val code = dialogBinding.codeInput.text?.toString()?.trim().orEmpty()
+            if (code.isEmpty()) {
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            if (isDs && !DsCheatFormat.isValid(code)) {
+                dialogBinding.codeInput.error = getString(R.string.cheat_invalid_ds)
+                return@setOnClickListener
+            }
+            dialog.dismiss()
+            val name = dialogBinding.nameInput.text?.toString()?.trim().orEmpty()
+                .ifEmpty { getString(R.string.cheat_default_name, cheats.size + 1) }
+            val type = types[dialogBinding.typeSpinner.selectedItemPosition.coerceAtLeast(0)].second
+            if (cheat == null) {
+                cheats.add(Cheat(name, code, type, enabled = true))
+                adapter.notifyItemInserted(cheats.size - 1)
+            } else {
+                cheat.name = name
+                cheat.code = code
+                cheat.type = type
+                adapter.notifyItemChanged(cheats.indexOf(cheat))
+            }
+            persist()
+        }
     }
 
     private inner class CheatAdapter : RecyclerView.Adapter<CheatHolder>() {

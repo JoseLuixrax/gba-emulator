@@ -281,6 +281,7 @@ void nds_reset(void) {
 		return;
 	}
 	writeSaveToDisk(session);
+	ndsRewindClear(session);
 	NDS& nds = *session->nds;
 	nds.Reset();
 	if (nds.NeedsDirectBoot()) {
@@ -304,6 +305,7 @@ void nds_run_frame(void) {
 		nds.ReleaseScreen();
 	}
 	nds.RunFrame();
+	ndsRewindAfterFrame(session);
 
 	bool flush = false;
 	{

@@ -108,6 +108,34 @@ JNIEXPORT void JNICALL JNI_FN(flushSave)(JNIEnv*, jobject) {
 	nds_flush_save();
 }
 
+JNIEXPORT jboolean JNICALL JNI_FN(saveState)(JNIEnv* env, jobject, jstring path) {
+	std::string p = toStdString(env, path);
+	return nds_save_state(p.c_str()) ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT jboolean JNICALL JNI_FN(loadState)(JNIEnv* env, jobject, jstring path) {
+	std::string p = toStdString(env, path);
+	return nds_load_state(p.c_str()) ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT void JNICALL JNI_FN(setRewind)(JNIEnv*, jobject, jboolean enabled, jint capacity, jint interval) {
+	nds_set_rewind(enabled, capacity, interval);
+}
+
+JNIEXPORT jboolean JNICALL JNI_FN(rewindStep)(JNIEnv*, jobject) {
+	return nds_rewind_step() ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT void JNICALL JNI_FN(cheatsClear)(JNIEnv*, jobject) {
+	nds_cheats_clear();
+}
+
+JNIEXPORT jboolean JNICALL JNI_FN(cheatsAdd)(JNIEnv* env, jobject, jstring name, jstring code, jboolean enabled) {
+	std::string n = toStdString(env, name);
+	std::string c = toStdString(env, code);
+	return nds_cheats_add(n.c_str(), c.c_str(), enabled) ? JNI_TRUE : JNI_FALSE;
+}
+
 JNIEXPORT jstring JNICALL JNI_FN(gameTitle)(JNIEnv* env, jobject) {
 	char title[64];
 	nds_game_title(title, sizeof(title));

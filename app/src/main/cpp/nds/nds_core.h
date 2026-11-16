@@ -76,6 +76,21 @@ void nds_flush_save(void);
 /* Game title from the ROM header (printable ASCII only). */
 void nds_game_title(char* out, size_t outSize);
 
+/* Save states: melonDS states, zlib compressed. Loading also accepts plain
+ * melonDS state files (.mln). A failed load leaves the game as it was. */
+bool nds_save_state(const char* path);
+bool nds_load_state(const char* path);
+
+/* Rewind: a snapshot every `interval` frames, up to `capacity` of them (and
+ * a memory budget). Each step goes back one snapshot and shows its frame. */
+void nds_set_rewind(bool enabled, int capacity, int interval);
+bool nds_rewind_step(void);
+
+/* Action Replay DS cheats: "XXXXXXXX YYYYYYYY" pairs, any spacing. Returns
+ * false (and adds nothing) when the code can't be read. */
+void nds_cheats_clear(void);
+bool nds_cheats_add(const char* name, const char* code, bool enabled);
+
 #ifdef __cplusplus
 }
 #endif

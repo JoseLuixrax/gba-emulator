@@ -1,6 +1,7 @@
 // Desktop test for nds_core: boots the homebrew ROM built by nds-rom/build.py
 // and checks video (both screens, colours, keys), audio rates at every
-// speed and the battery save path. Exit code is non-zero on failure.
+// speed, the battery save path, save states, rewind and Action Replay
+// cheats. Exit code is non-zero on failure.
 #include "nds_core.h"
 #include "nds_session.h"
 #include "Platform.h"
@@ -8,6 +9,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <zlib.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -61,6 +64,123 @@ static double runAndCountAudio(int frames) {
 static uint32_t pixel(const std::vector<uint8_t>& img, int x, int y) {
 	const uint8_t* p = &img[(y * 256 + x) * 4];
 	return (p[0] << 16) | (p[1] << 8) | p[2];
+}
+
+// The test ROM counts frames in RAM and draws the count as 12 bits in the
+// first pixels of the top screen (red = 1).
+static int frameCounter() {
+	std::vector<uint8_t> img(256 * 384 * 4);
+	unsigned w = 0, h = 0;
+	nds_copy_video(img.data(), img.size(), &w, &h);
+	int count = 0;
+	for (int bit = 0; bit < 12; ++bit) {
+		if ((pixel(img, bit, 0) >> 16) > 0x80) count |= 1 << bit;
+	}
+	return count;
+}
+
+static void writeAll(const std::string& path, const void* data, size_t size) {
+	FILE* f = fopen(path.c_str(), "wb");
+	if (!f) return;
+	fwrite(data, 1, size, f);
+	fclose(f);
+}
+
+static void testStatesRewindCheats(const std::string& outDir) {
+	// The counter moves one step per frame.
+	int c0 = frameCounter();
+	runAndCountAudio(10);
+	int c1 = frameCounter();
+	CHECK(c1 - c0 == 10, "frame counter went %d -> %d in 10 frames", c0, c1);
+
+	// Save states: back to the saved moment, plus the one frame we run.
+	std::string statePath = outDir + "/slot1.state";
+	remove(statePath.c_str());
+	CHECK(nds_save_state(statePath.c_str()), "nds_save_state failed");
+	int onSave = frameCounter();
+	runAndCountAudio(30);
+	CHECK(nds_load_state(statePath.c_str()), "nds_load_state failed");
+	runAndCountAudio(1);
+	int afterLoad = frameCounter();
+	CHECK(afterLoad - onSave >= 0 && afterLoad - onSave <= 2, "after loading the counter is %d, saved at %d", afterLoad, onSave);
+
+	std::vector<uint8_t> packed = readAll(statePath.c_str());
+	uint32_t rawLength = 0;
+	if (packed.size() > 12) memcpy(&rawLength, &packed[8], 4);
+	CHECK(packed.size() > 12 && memcmp(packed.data(), "ABDSST01", 8) == 0, "state file header");
+	CHECK(rawLength > 1024 * 1024 && packed.size() < rawLength / 2, "state %u bytes, file %zu bytes", rawLength, packed.size());
+
+	// A plain melonDS state (.mln) loads too.
+	std::vector<uint8_t> raw(rawLength);
+	uLongf rawSize = rawLength;
+	bool unpacked = packed.size() > 12 && uncompress(raw.data(), &rawSize, packed.data() + 12, packed.size() - 12) == Z_OK;
+	CHECK(unpacked && rawSize == rawLength && memcmp(raw.data(), "MELN", 4) == 0, "state doesn't unpack to a melonDS state");
+	std::string mlnPath = outDir + "/plain.mln";
+	writeAll(mlnPath, raw.data(), raw.size());
+	runAndCountAudio(20);
+	CHECK(nds_load_state(mlnPath.c_str()), "loading a .mln failed");
+	runAndCountAudio(1);
+	int afterMln = frameCounter();
+	CHECK(afterMln - onSave >= 0 && afterMln - onSave <= 2, "after the .mln the counter is %d, saved at %d", afterMln, onSave);
+
+	// Bad files are refused and the game goes on where it was.
+	std::string junkPath = outDir + "/junk.state";
+	writeAll(junkPath, "ABDSST01\x10\x00\x00\x00garbage", 19);
+	int beforeJunk = frameCounter();
+	CHECK(!nds_load_state(junkPath.c_str()), "a damaged state was accepted");
+	CHECK(!nds_load_state((outDir + "/missing.state").c_str()), "a missing state was accepted");
+	runAndCountAudio(1);
+	CHECK(frameCounter() == beforeJunk + 1, "the game didn't go on after a refused state (%d -> %d)", beforeJunk, frameCounter());
+
+	// Rewind: a snapshot every 3 frames; each step goes back one of them.
+	CHECK(!nds_rewind_step(), "rewind worked while disabled");
+	nds_set_rewind(true, 100, 3);
+	runAndCountAudio(60);
+	int beforeRewind = frameCounter();
+	int previous = beforeRewind;
+	bool decreasing = true;
+	for (int i = 0; i < 5; ++i) {
+		CHECK(nds_rewind_step(), "rewind step %d failed", i);
+		int c = frameCounter();
+		if (c >= previous) decreasing = false;
+		previous = c;
+	}
+	CHECK(decreasing, "rewinding didn't go back in time");
+	int back = beforeRewind - previous;
+	CHECK(back >= 12 && back <= 18, "5 rewind steps went back %d frames", back);
+	size_t steps = gNdsSession->rewindSteps.size();
+	size_t bytes = gNdsSession->rewindBytes;
+	printf("rewind: %zu steps in memory, %zu bytes in total\n", steps, bytes);
+	// Playing again continues from there, and rewinding still works.
+	runAndCountAudio(30);
+	CHECK(nds_rewind_step(), "rewind after resuming failed");
+	int stepsTaken = 1;
+	while (nds_rewind_step()) ++stepsTaken;
+	CHECK(stepsTaken >= 10 && stepsTaken <= 100, "%d rewind steps until the start of the history", stepsTaken);
+	// The capacity is respected.
+	nds_set_rewind(true, 5, 1);
+	runAndCountAudio(30);
+	CHECK(gNdsSession->rewindSteps.size() == 5, "capacity 5 kept %zu steps", gNdsSession->rewindSteps.size());
+	nds_set_rewind(false, 0, 0);
+	CHECK(!nds_rewind_step(), "rewind worked after turning it off");
+	CHECK(gNdsSession->rewindNewest.empty(), "rewind memory not freed");
+
+	// Action Replay: "0XXXXXXX YYYYYYYY" writes YYYYYYYY to XXXXXXX, here
+	// the frame counter, every VBlank.
+	CHECK(!nds_cheats_add("bad", "XYZ12345 00000001", true), "accepted non-hex code");
+	CHECK(!nds_cheats_add("odd", "02100000", true), "accepted a half code");
+	CHECK(!nds_cheats_add("short", "2100000 00000100", true), "accepted a 7-digit word");
+	CHECK(nds_cheats_add("off", "0210000000000800", false), "16-digit form refused");
+	CHECK(nds_cheats_add("counter", "02100000 00000100\n", true), "valid code refused");
+	runAndCountAudio(5);
+	int cheated = frameCounter();
+	CHECK(cheated >= 0x100 && cheated <= 0x102, "with the cheat the counter is %d", cheated);
+	nds_cheats_clear();
+	runAndCountAudio(5);
+	int freed = frameCounter();
+	// The picture runs a frame or two behind the counter; what matters is
+	// that it counts again.
+	CHECK(freed >= cheated + 2 && freed <= cheated + 6, "after clearing cheats the counter is %d (was %d)", freed, cheated);
 }
 
 int main(int argc, char** argv) {
@@ -127,6 +247,8 @@ int main(int argc, char** argv) {
 	runAndCountAudio(40);
 	std::vector<uint8_t> saved = readAll(savePath.c_str());
 	CHECK(saved.size() == 512 && memcmp(saved.data(), fake, 512) == 0, "save file has %zu bytes", saved.size());
+
+	testStatesRewindCheats(outDir);
 
 	nds_reset();
 	runAndCountAudio(10);

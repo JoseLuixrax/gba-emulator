@@ -95,7 +95,7 @@
     <string name="reset_defaults">Restore defaults</string>
 
     <!-- Cheats -->
-    <string name="cheats_empty">No cheats yet.\nTap “Add cheat” to enter a GameShark, Action Replay or CodeBreaker code.</string>
+    <string name="cheats_empty">No cheats yet.\nTap “Add cheat” to enter a GameShark, Action Replay or CodeBreaker code (Action Replay DS for DS games).</string>
     <string name="add_cheat">Add cheat</string>
     <string name="edit_cheat">Edit cheat</string>
     <string name="cheat_name">Name</string>
@@ -105,11 +105,14 @@
     <string name="cheat_type_auto">Detect automatically</string>
     <string name="cheat_type_gameshark">GameShark</string>
     <string name="cheat_type_action_replay">Action Replay (v3 / MAX)</string>
+    <string name="cheat_type_action_replay_ds" translatable="false">Action Replay DS</string>
     <string name="cheat_type_codebreaker">CodeBreaker</string>
     <string name="cheat_type_game_genie">Game Genie</string>
     <string name="cheat_type_raw">Raw (address:value)</string>
     <string name="cheat_help_gba">Formats: GameShark / Action Replay “XXXXXXXX YYYYYYYY”, CodeBreaker “XXXXXXXX YYYY”, raw “AAAAAAAA:VV”. Spaces are optional.</string>
     <string name="cheat_help_gb">Formats: GameShark “01VVAAAA”, Game Genie “VVA-AAA-CCC”, raw “AAAA:VV”.</string>
+    <string name="cheat_help_ds">Action Replay DS codes: “XXXXXXXX YYYYYYYY”, one pair per line. Spaces are optional.</string>
+    <string name="cheat_invalid_ds">That doesn’t look like an Action Replay DS code: it should be pairs of 8-digit hex numbers.</string>
 
     <!-- Settings -->
     <string name="pref_cat_video">Video</string>
@@ -145,7 +148,7 @@
     <string name="pref_ff_audio">Sound in fast forward / slow motion</string>
     <string name="pref_ff_audio_summary">Music plays at the same speed as the game, faster or slower (not with Unlimited)</string>
     <string name="pref_rewind">Rewind</string>
-    <string name="pref_rewind_summary">Adds a rewind button. Uses more memory and battery.</string>
+    <string name="pref_rewind_summary">Adds a rewind button. Uses more memory and battery, and on DS also some speed.</string>
     <string name="pref_rewind_seconds">Rewind length</string>
     <string name="pref_auto_save">Auto save state on exit</string>
     <string name="pref_auto_save_summary">Saves where you are when you leave the game</string>

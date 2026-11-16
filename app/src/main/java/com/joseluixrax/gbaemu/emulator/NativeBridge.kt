@@ -18,6 +18,9 @@ object NativeBridge {
     const val PLATFORM_GBA = 0
     const val PLATFORM_GB = 1
 
+    /** Not an mGBA platform: the app's own value for DS games (melonDS). */
+    const val PLATFORM_DS = 2
+
     // Cartridge hardware flags returned by [hardware].
     const val HW_RTC = 1
     const val HW_RUMBLE = 2

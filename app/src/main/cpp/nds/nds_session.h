@@ -3,6 +3,7 @@
 #define NDS_SESSION_H
 
 #include <atomic>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -37,8 +38,29 @@ struct NdsSession {
 	double stretchPos = -1.0;
 	melonDS::s16 lastLeft = 0;
 	melonDS::s16 lastRight = 0;
+
+	// Scratch buffer the savestates are written into (reused, ~7 MB).
+	std::vector<melonDS::u8> stateBuffer;
+
+	// Rewind: the newest snapshot in full, and for each older one the
+	// compressed XOR difference that turns its newer neighbour into it.
+	struct RewindStep {
+		std::vector<melonDS::u8> delta;
+		melonDS::u32 length; // size of the older snapshot
+	};
+	bool rewindEnabled = false;
+	int rewindCapacity = 0;
+	int rewindInterval = 1;
+	int framesSinceSnapshot = 0;
+	size_t rewindBytes = 0;
+	std::vector<melonDS::u8> rewindNewest;
+	std::deque<RewindStep> rewindSteps;
 };
 
 extern NdsSession* gNdsSession;
+
+// nds_states.cpp: rewind snapshots after each frame, and forgetting them.
+void ndsRewindAfterFrame(NdsSession* session);
+void ndsRewindClear(NdsSession* session);
 
 #endif

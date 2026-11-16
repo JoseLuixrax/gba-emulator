@@ -59,5 +59,16 @@ object NdsBridge {
 
     /** Writes the battery save to disk now if the game changed it. */
     external fun flushSave()
+
+    /** zlib-compressed melonDS states. Loading also takes plain melonDS .mln files. */
+    external fun saveState(path: String): Boolean
+    external fun loadState(path: String): Boolean
+
+    external fun setRewind(enabled: Boolean, capacity: Int, interval: Int)
+    external fun rewindStep(): Boolean
+
+    /** Action Replay DS codes ("XXXXXXXX YYYYYYYY" pairs). False if the code can't be read. */
+    external fun cheatsClear()
+    external fun cheatsAdd(name: String, code: String, enabled: Boolean): Boolean
     external fun gameTitle(): String
 }

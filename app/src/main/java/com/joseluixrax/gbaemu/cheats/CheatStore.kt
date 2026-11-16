@@ -23,6 +23,25 @@ object CheatType {
     const val GAME_GENIE = 5
 }
 
+/**
+ * Action Replay DS codes: words of 8 hex digits ("XXXXXXXX YYYYYYYY", 16 digits
+ * together count as two), any spacing, an even number of words. The same rules
+ * as nds_cheats_add in the native core.
+ */
+object DsCheatFormat {
+    fun isValid(code: String): Boolean {
+        val tokens = code.split(Regex("[\\s,:;-]+")).filter { it.isNotEmpty() }
+        if (tokens.isEmpty()) return false
+        var words = 0
+        for (token in tokens) {
+            if (token.length != 8 && token.length != 16) return false
+            if (!token.all { it in '0'..'9' || it.lowercaseChar() in 'a'..'f' }) return false
+            words += token.length / 8
+        }
+        return words % 2 == 0
+    }
+}
+
 /** Cheats are stored per game as JSON in files/cheats/<game>.json. */
 class CheatStore(context: Context, gameKey: String) {
     private val file = File(context.filesDir, "cheats/$gameKey.json")
