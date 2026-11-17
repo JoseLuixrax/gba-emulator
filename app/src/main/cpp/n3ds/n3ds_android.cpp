@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstdio>
 #include <cstring>
@@ -74,7 +75,12 @@ struct Session {
 	bool running = false; // game loaded and renderer started
 	AAudioStream* audio = nullptr;
 	bool audioStarted = false;
+	int32_t audioRate = 0;          // the stream's; may differ from the core's
+	Clock::time_point audioRetry;   // after a failed open, don't retry every frame
+	double resamplePos = 0.0;
+	int16_t lastLeft = 0, lastRight = 0;
 	std::vector<int16_t> samples;
+	std::vector<int16_t> resampled;
 	Clock::time_point deadline;
 	Clock::time_point fpsStart;
 	int fpsFrames = 0;
@@ -122,27 +128,76 @@ void closeAudio(Session* s) {
 	s->audioStarted = false;
 }
 
-void openAudio(Session* s) {
-	closeAudio(s);
+AAudioStream* tryOpenAudio(int32_t rate) {
 	AAudioStreamBuilder* builder = nullptr;
 	if (AAudio_createStreamBuilder(&builder) != AAUDIO_OK) {
-		return;
+		return nullptr;
 	}
 	AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_OUTPUT);
 	AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
 	AAudioStreamBuilder_setChannelCount(builder, 2);
-	// The 3DS rate (32728 Hz); Android converts it.
-	AAudioStreamBuilder_setSampleRate(builder, (int32_t) n3ds::Host::get().sampleRate());
+	if (rate > 0) {
+		AAudioStreamBuilder_setSampleRate(builder, rate);
+	}
 	AAudioStreamBuilder_setUsage(builder, AAUDIO_USAGE_GAME);
 	AAudioStreamBuilder_setContentType(builder, AAUDIO_CONTENT_TYPE_MUSIC);
 	AAudioStream* stream = nullptr;
-	if (AAudioStreamBuilder_openStream(builder, &stream) == AAUDIO_OK) {
-		// About four frames of buffering: low latency without crackles.
-		int32_t frames = (int32_t) (n3ds::Host::get().sampleRate() / 60.0 * 4);
-		AAudioStream_setBufferSizeInFrames(stream, frames);
-		s->audio = stream;
+	if (AAudioStreamBuilder_openStream(builder, &stream) != AAUDIO_OK) {
+		stream = nullptr;
 	}
 	AAudioStreamBuilder_delete(builder);
+	return stream;
+}
+
+void openAudio(Session* s) {
+	closeAudio(s);
+	auto now = Clock::now();
+	if (now < s->audioRetry) {
+		return;
+	}
+	// The 3DS rate (32728 Hz), which Android normally converts itself; if
+	// this phone won't, the phone's own rate and we convert (writeAudio).
+	auto coreRate = (int32_t) n3ds::Host::get().sampleRate();
+	AAudioStream* stream = tryOpenAudio(coreRate);
+	if (!stream) {
+		stream = tryOpenAudio(0);
+	}
+	if (!stream) {
+		s->audioRetry = now + std::chrono::seconds(2);
+		return;
+	}
+	s->audioRate = AAudioStream_getSampleRate(stream);
+	if (s->audioRate <= 0) {
+		s->audioRate = coreRate;
+	}
+	// About four frames of buffering: low latency without crackles.
+	AAudioStream_setBufferSizeInFrames(stream, s->audioRate / 60 * 4);
+	s->audio = stream;
+}
+
+// Linear interpolation from the core's rate to the stream's, carried over
+// from one frame's chunk to the next.
+void resample(Session* s, int32_t from, int32_t to) {
+	const std::vector<int16_t>& in = s->samples;
+	auto frames = (int64_t) (in.size() / 2);
+	double step = (double) from / to;
+	double pos = s->resamplePos; // -1 is the previous chunk's last frame
+	s->resampled.clear();
+	while (pos <= (double) (frames - 1)) {
+		auto i = (int64_t) std::floor(pos);
+		double f = pos - (double) i;
+		int16_t aL = i < 0 ? s->lastLeft : in[2 * i];
+		int16_t aR = i < 0 ? s->lastRight : in[2 * i + 1];
+		int16_t bL = i + 1 < frames ? in[2 * (i + 1)] : aL;
+		int16_t bR = i + 1 < frames ? in[2 * (i + 1) + 1] : aR;
+		s->resampled.push_back((int16_t) (aL + (bL - aL) * f));
+		s->resampled.push_back((int16_t) (aR + (bR - aR) * f));
+		pos += step;
+	}
+	s->resamplePos = pos - (double) frames;
+	s->lastLeft = in[2 * (frames - 1)];
+	s->lastRight = in[2 * (frames - 1) + 1];
+	s->samples.swap(s->resampled);
 }
 
 void startAudio(Session* s) {
@@ -180,6 +235,13 @@ void writeAudio(Session* s) {
 	}
 	if (!s->audio) {
 		return;
+	}
+	auto coreRate = (int32_t) n3ds::Host::get().sampleRate();
+	if (s->audioRate != coreRate && s->audioRate > 0) {
+		resample(s, coreRate, s->audioRate);
+		if (s->samples.empty()) {
+			return;
+		}
 	}
 	int32_t frames = (int32_t) (s->samples.size() / 2);
 	aaudio_result_t result = AAudioStream_write(s->audio, s->samples.data(), frames, 200000000LL);
