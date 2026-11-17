@@ -66,6 +66,17 @@
         <item>single</item>
     </string-array>
 
+    <string-array name="n3ds_resolution_entries">
+        <item>@string/n3ds_res_1</item>
+        <item>@string/n3ds_res_2</item>
+        <item>@string/n3ds_res_3</item>
+    </string-array>
+    <string-array name="n3ds_resolution_values" translatable="false">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
     <string-array name="turbo_speed_entries">
         <item>@string/turbo_speed_30</item>
         <item>@string/turbo_speed_15</item>

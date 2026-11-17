@@ -63,6 +63,7 @@ class RomAdapter(
             "gb" -> "Game Boy"
             "gbc" -> "Game Boy Color"
             "nds" -> "Nintendo DS"
+            in RomLoader.N3DS_EXTENSIONS -> "Nintendo 3DS"
             "zip" -> "ZIP"
             else -> "Game Boy Advance"
         }

@@ -1,8 +1,8 @@
 # AdvanceBoy
 
-Emulador de Game Boy Advance y Nintendo DS para Android. También abre juegos de Game Boy y Game Boy Color.
+Emulador de Game Boy Advance, Nintendo DS y Nintendo 3DS para Android. También abre juegos de Game Boy y Game Boy Color.
 
-La emulación de GBA, GB y GBC la hace [mGBA](https://mgba.io) (versión 0.10.5) y la de DS, [melonDS](https://melonds.kuribo64.net) (versión 1.1). Son de lo más preciso que hay. Todo lo demás es una app Android escrita en Kotlin: la lista de juegos, los controles táctiles, el audio, la imagen, las partidas y los ajustes.
+La emulación de GBA, GB y GBC la hace [mGBA](https://mgba.io) (versión 0.10.5), la de DS, [melonDS](https://melonds.kuribo64.net) (versión 1.1) y la de 3DS, [Azahar](https://azahar-emu.org) (versión 2126.2), que es la continuación de Citra. Son de lo más preciso que hay. Todo lo demás es una app Android escrita en Kotlin: la lista de juegos, los controles táctiles, el audio, la imagen, las partidas y los ajustes.
 
 ## Descargar
 
@@ -12,12 +12,13 @@ https://github.com/JoseLuixrax/gba-emulator/releases/latest/download/AdvanceBoy.
 
 Al abrir el archivo, Android te pedirá permiso para instalar apps de fuera de Play Store desde el navegador o el gestor de archivos. Lo das una vez y listo.
 
-Necesita Android 8.0 o superior. Para los juegos de DS hace falta además un móvil de 64 bits, que son casi todos los de los últimos años. Las versiones nuevas se instalan encima de la anterior sin perder las partidas, pero no desinstales la app para actualizar, porque al desinstalar se borran.
+Necesita Android 8.0 o superior. Para los juegos de DS hace falta además un móvil de 64 bits, que son casi todos los de los últimos años. Los de 3DS piden bastante más: un móvil ARM de 64 bits con OpenGL ES 3.2 y, a ser posible, de gama media-alta (más detalles en su apartado). Las versiones nuevas se instalan encima de la anterior sin perder las partidas, pero no desinstales la app para actualizar, porque al desinstalar se borran.
 
 ## Qué tiene
 
-- Lista de juegos a partir de una carpeta del móvil (`.gba`, `.gb`, `.gbc`, `.nds` y `.zip`, también en subcarpetas), con los últimos que has jugado arriba.
+- Lista de juegos a partir de una carpeta del móvil (`.gba`, `.gb`, `.gbc`, `.nds`, `.3ds`, `.cci`, `.cxi`, `.3dsx`, `.cia` y `.zip`, también en subcarpetas), con los últimos que has jugado arriba.
 - Juegos de DS con las dos pantallas, la táctil se usa con el dedo, botones X e Y y un botón para soplar al micrófono, y también con estados, trucos y rebobinado. Más abajo hay un apartado solo para DS.
+- Juegos de 3DS con las dos pantallas, la táctil, el stick circular, ZL y ZR, estados y avance rápido. También tienen su apartado más abajo.
 - 10 ranuras de estado con miniatura y fecha, más un guardado automático al salir para seguir donde lo dejaste.
 - Avance rápido de x2 a x8 y cámara lenta de x0,1 a x0,5. La música va a la misma velocidad que el juego.
 - Rebobinar (se activa en ajustes).
@@ -62,6 +63,26 @@ Se abren igual que los de GBA, desde la misma lista. No hace falta BIOS ni firmw
 - Los trucos son códigos Action Replay DS, de los de toda la vida: parejas de números de 8 cifras, una por línea. Si te equivocas al copiarlo, la app te avisa antes de guardarlo.
 - El rebobinado en DS guarda una foto del juego cada 6 fotogramas y al mantener el botón « vuelve atrás al doble de velocidad. Una foto de DS pesa mucho más que una de GBA, así que la app guarda solo los cambios entre una y otra y el historial no pasa de unos 100 MB de memoria; según el juego eso da para más o menos segundos. En móviles justos de potencia se nota algo en la velocidad, así que si no lo usas, mejor dejarlo apagado.
 
+## Juegos de 3DS
+
+Salen en la misma lista y se abren igual. No hace falta nada de una consola (ni BIOS, ni firmware, ni claves): Azahar arranca el juego directamente.
+
+- Los juegos tienen que estar **descifrados**. Cuando hagas la copia de tu propio cartucho o de tus descargas con una 3DS, sácala ya descifrada (GodMode9 lo hace). Si el juego está cifrado, la app te lo dice al abrirlo en vez de quedarse en negro.
+- Formatos: `.3ds` y `.cci` (cartuchos), `.cxi`, `.3dsx` (homebrew), `.cia` y los comprimidos de Azahar (`.zcci`, `.zcxi`, `.z3dsx`). Un `.cia` no se instala: la app abre directamente el juego que lleva dentro. Los `.cia` que son solo actualizaciones o DLC no se pueden abrir solos, y la app te avisa.
+- **Qué móvil hace falta**: un ARM de 64 bits con OpenGL ES 3.2 (casi todos los de los últimos años), y cuanto más potente, mejor. En un gama media-alta de hace un par de años van bien muchos juegos a velocidad completa, pero los más pesados (Pokémon Sol y Luna, Monster Hunter...) pueden ir a tirones en móviles justos. Los móviles con procesador Intel o AMD (algunos Chromebook) no pueden con ellos.
+- Los controles: stick circular (lo arrastras con el pulgar), cruceta, A, B, X, Y, L, R, ZL, ZR, START y SELECT. Con mando, el stick izquierdo es el stick circular, el derecho el C-Stick de la New 3DS, y ZL y ZR van en los gatillos L2 y R2 si no les has puesto otro botón. Todo se puede recolocar y cambiar de tamaño, por separado de los de GBA y DS.
+- La pantalla de abajo es táctil, igual que en DS.
+- El botón ↕ cambia qué pantalla va arriba, y la app se acuerda para la próxima vez.
+- En vertical las pantallas van arriba y los controles debajo. En horizontal las dos van en el centro, una encima de la otra.
+- En Ajustes > Nintendo 3DS puedes subir la resolución interna (doble o triple). Se ve mucho más nítido, pero pide bastante más al móvil. También está el modo New 3DS (activado), que algunos juegos necesitan.
+- El idioma del juego es el del móvil, si el juego lo trae.
+- Estados: 10 ranuras más el automático, como en el resto. Un estado de 3DS pesa más (decenas de MB, según el juego) y tarda un poco en guardarse.
+- El avance rápido y la cámara lenta funcionan, pero sin música. Rebobinar y trucos no hay en 3DS de momento.
+- Los juegos de 3DS se abren en un proceso aparte de la app. Si algo falla dentro del emulador, se cierra solo el juego y no la app entera.
+- La primera vez que juegas a algo puede dar algún tirón mientras se preparan los gráficos. Se guardan, así que la siguiente vez va más fluido.
+
+Lo que falta en 3DS: el micrófono, el giroscopio, el modo 3D, las partidas en red y los juegos que necesitan archivos del sistema de la consola (algunos pocos).
+
 ## Dónde se guardan las partidas
 
 Todo va en la carpeta de la app:
@@ -71,7 +92,10 @@ Android/data/com.joseluixrax.gbaemu/files/
   saves/<juego>.sav            partida del juego (GBA y DS)
   states/<juego>/slotN.state   estados guardados (slot0 es el automático)
   states/<juego>/slotN.png     sus miniaturas
+  3ds/saves/Azahar/            todo lo de 3DS: partidas (sdmc/), memoria de la consola (nand/) y gráficos ya preparados (shaders/)
 ```
+
+Las partidas de 3DS siguen la misma estructura que Azahar en PC, así que se pueden pasar de uno a otro copiando la carpeta `sdmc`.
 
 Desde Android 11 los gestores de archivos no pueden entrar en `Android/data`, así que para llegar ahí desde el móvil tienes dos caminos: Ajustes > Archivos > Abrir carpeta de partidas, o la app Archivos de Android, donde aparece "AdvanceBoy" en el menú lateral. Desde el ordenador por USB se entra normal.
 
@@ -85,7 +109,7 @@ La app no incluye juegos ni BIOS.
 
 ## Compilar
 
-Con [Android Studio](https://developer.android.com/studio): abres la carpeta del proyecto y le das a Run. La primera vez descarga solo el NDK, CMake y el código de mGBA y de melonDS (a `third_party/mgba` y `third_party/melonds`).
+Con [Android Studio](https://developer.android.com/studio): abres la carpeta del proyecto y le das a Run. La primera vez descarga solo el NDK, CMake, el código de mGBA y de melonDS (a `third_party/mgba` y `third_party/melonds`) y el núcleo de Azahar ya compilado para Android (a `third_party/azahar`).
 
 Desde terminal:
 
@@ -121,6 +145,7 @@ app/
     emu_core.c                capa sobre mGBA: cargar ROM, frames, audio, estados, trucos...
     jni_bridge.c              lo que se llama desde Kotlin para GBA
     nds/                      lo mismo para DS sobre melonDS (núcleo, archivos e hilos, JNI)
+    n3ds/                     el 3DS: carga el núcleo de Azahar (libretro), le da OpenGL ES, audio y archivos
   src/main/java/com/joseluixrax/gbaemu/
     emulator/                 bucle de emulación, audio, ROMs y rutas de archivos
     ui/library/               pantalla de inicio con la lista de juegos
@@ -134,6 +159,8 @@ native-test/                  prueba el núcleo en Linux con ROMs de test
 ```
 
 Cada frame funciona así: el hilo de emulación le pide un frame al núcleo (mGBA o melonDS), copia la imagen para que OpenGL la pinte con el filtro elegido y manda el audio de ese frame al altavoz. Escribir el audio bloquea justo lo que dura el frame, y eso es lo que hace que el juego vaya a su velocidad real (o a x4, o a x0,5, según lo que toque).
+
+El 3DS va por otro camino, porque Azahar dibuja con la GPU. Azahar se distribuye como núcleo libretro (una librería con una interfaz estándar para emuladores) y `n3ds/` hace de programa anfitrión: en un hilo propio crea dos contextos de OpenGL ES que comparten texturas, uno para Azahar y otro para la pantalla. Azahar pinta cada frame en una textura y el otro contexto la dibuja en la parte de la pantalla que le dice la app. El audio sale por AAudio y, como en el resto, es lo que marca el ritmo. La ROM no se copia: Azahar la lee a través de un sistema de archivos virtual que va directo al archivo que elegiste (y en un `.cia`, solo a la parte donde está el juego).
 
 ## Tests del núcleo
 
@@ -150,11 +177,17 @@ cmake -S native-test -B build/native-test -DCMAKE_BUILD_TYPE=Release \
 cmake --build build/native-test -j
 ./build/native-test/host_test native-test/roms build/native-test/out
 ./build/native-test/nds_host_test native-test/nds-roms/test.nds build/native-test/out-nds
+# 3DS (necesita EGL de Mesa: apt install libegl-dev libegl-mesa0 libgl1-mesa-dri)
+curl -LO https://github.com/azahar-emu/azahar/releases/download/2126.2/azahar-libretro-linux-x86_64-2126.2.zip
+unzip azahar-libretro-linux-x86_64-2126.2.zip -d third_party/azahar-linux
+./build/native-test/n3ds_host_test third_party/azahar-linux/azahar_libretro.so native-test/3ds-roms/test.3dsx build/native-test/out-3ds
 ```
 
 El primero ejecuta las ROMs de `native-test/roms` ([gba-tests de jsmolka](https://github.com/jsmolka/gba-tests), licencia MIT), comprueba imagen, audio, estados, partidas Flash y SRAM, rebobinado, trucos y velocidades, y guarda una captura de cada una.
 
 El segundo arranca una ROM de DS casera hecha solo para esto (el código está en `native-test/nds-rom` y se genera con `build.py`) y comprueba las dos pantallas, los botones, el audio a cada velocidad, la carga desde archivo, que la partida se guarde bien, el micrófono (la ROM lo lee como un juego, a través del controlador de la pantalla táctil, y se comprueba el silencio, el soplido y lo que llega del móvil), los estados (también los `.mln` de melonDS y que uno roto no estropee la partida), el rebobinado y los trucos Action Replay. La ROM lleva un contador de fotogramas en memoria que se pinta en pantalla, y así se ve si un estado o el rebobinado vuelven de verdad al momento correcto.
+
+El tercero prueba la parte de 3DS con el núcleo de Azahar para Linux, pintando con el OpenGL por software de Mesa. Primero mira cómo se reconocen los archivos (cartuchos, `.cxi`, `.cia` con el juego dentro, cifrados, actualizaciones, archivos cortados) y el sistema de archivos virtual. Luego arranca un homebrew mínimo hecho para esto (`native-test/3ds-rom`, se genera con `build.py`), deja correr 120 frames y comprueba que se pintan, que el juego queda en su sitio de la pantalla, los estados, el reinicio y los botones.
 
 ## Pendiente
 
@@ -170,6 +203,8 @@ El código de esta app se publica con licencia [GNU GPL v3](LICENSE). Es la lice
 - mGBA, de Vicki Pfau y colaboradores, con licencia [Mozilla Public License 2.0](https://github.com/mgba-emu/mgba/blob/master/LICENSE). Se descarga tal cual desde su repositorio oficial.
 - melonDS, del equipo de melonDS, con licencia [GPL v3](https://github.com/melonDS-emu/melonDS/blob/master/LICENSE). También se descarga tal cual. Trae dentro FreeBIOS, teakra, FatFs, xxHash, libslirp, tiny-AES-c y sha1, con licencias permisivas.
 - blip_buf (LGPL 2.1) e inih (BSD), que vienen con mGBA.
+- Azahar, del Azahar Emulator Project (antes Citra Emulator Project), con licencia [GPL v3 o posterior](https://github.com/azahar-emu/azahar/blob/master/LICENSE.txt). La app lleva el núcleo libretro para Android que publica el propio proyecto en su [release 2126.2](https://github.com/azahar-emu/azahar/releases/tag/2126.2), sin tocar; el código fuente de esa versión está en esa misma etiqueta de su repositorio. Dentro lleva dynarmic, Boost, fmt, cryptopp, zstd, teakra, glslang y otras librerías libres.
+- `libretro.h`, de libretro (MIT).
 - Las ROMs de prueba de jsmolka/gba-tests (MIT), ver `native-test/roms/LICENSE-gba-tests`.
 
-Nintendo DS, Game Boy Advance y Game Boy son marcas de Nintendo. Este proyecto no tiene nada que ver con Nintendo.
+Nintendo 3DS, Nintendo DS, Game Boy Advance y Game Boy son marcas de Nintendo. Este proyecto no tiene nada que ver con Nintendo.

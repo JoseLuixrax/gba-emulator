@@ -259,6 +259,25 @@
 
     <PreferenceCategory
         app:iconSpaceReserved="false"
+        app:title="@string/pref_cat_3ds">
+        <ListPreference
+            app:defaultValue="1"
+            app:entries="@array/n3ds_resolution_entries"
+            app:entryValues="@array/n3ds_resolution_values"
+            app:iconSpaceReserved="false"
+            app:key="3ds_resolution"
+            app:title="@string/pref_3ds_resolution"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:iconSpaceReserved="false"
+            app:key="3ds_new_model"
+            app:summary="@string/pref_3ds_new_summary"
+            app:title="@string/pref_3ds_new" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
         app:title="@string/pref_cat_files">
         <Preference
             app:iconSpaceReserved="false"

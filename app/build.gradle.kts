@@ -102,6 +102,58 @@ fun ensureSources(core: CoreSource) {
 ensureSources(mgba)
 ensureSources(melonds)
 
+// ---------------------------------------------------------------------------
+// 3DS: the Azahar libretro core, prebuilt by the Azahar project for 64-bit
+// ARM (GPL v3, source at github.com/azahar-emu/azahar, tag below). It goes in
+// the APK as libazahar_libretro.so and the app's n3ds library loads it.
+// ---------------------------------------------------------------------------
+val azaharVersion = "2126.2"
+val azaharUrl = "https://github.com/azahar-emu/azahar/releases/download/$azaharVersion/" +
+    "azahar-libretro-android-arm64-v8a-$azaharVersion.zip"
+val azaharSha256 = "1998ccf0a1f803cd66ff90a36280c64d3ff915b48acf1c4b5b0e8fd2b263faf3"
+val azaharLibs: File = rootDir.resolve("third_party/azahar/jniLibs")
+
+fun ensureAzaharCore() {
+    val target = azaharLibs.resolve("arm64-v8a/libazahar_libretro.so")
+    val marker = azaharLibs.resolve(".core-version")
+    if (target.isFile && marker.isFile && marker.readText().trim() == azaharVersion) return
+
+    logger.lifecycle("Downloading the Azahar 3DS core $azaharVersion from $azaharUrl")
+    val archive = layout.buildDirectory.file("tmp/azahar-$azaharVersion.zip").get().asFile
+    archive.parentFile.mkdirs()
+    var attempt = 1
+    while (true) {
+        try {
+            URI(azaharUrl).toURL().openStream().use { input ->
+                archive.outputStream().use { output -> input.copyTo(output) }
+            }
+            break
+        } catch (e: java.io.IOException) {
+            if (attempt >= 4) throw e
+            logger.warn("Download failed (${e.message}), retrying")
+            Thread.sleep(5000L * attempt)
+            attempt++
+        }
+    }
+    val digest = MessageDigest.getInstance("SHA-256")
+        .digest(archive.readBytes())
+        .joinToString("") { "%02x".format(it) }
+    if (!digest.equals(azaharSha256, ignoreCase = true)) {
+        throw GradleException("Azahar core checksum mismatch: expected $azaharSha256, got $digest")
+    }
+    delete(azaharLibs)
+    copy {
+        from(zipTree(archive))
+        include("azahar_libretro.so")
+        // Android only packs libraries named lib*.so.
+        rename { "libazahar_libretro.so" }
+        into(azaharLibs.resolve("arm64-v8a"))
+    }
+    marker.writeText(azaharVersion)
+}
+
+ensureAzaharCore()
+
 android {
     namespace = "com.joseluixrax.gbaemu"
     compileSdk = 35
@@ -111,8 +163,8 @@ android {
         applicationId = "com.joseluixrax.gbaemu"
         minSdk = 26 // Android 8.0: mGBA needs strtof_l from bionic (API 26+)
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.5.0"
+        versionCode = 10
+        versionName = "2.0.0"
 
         ndk {
             // Real phones (arm64 / older arm) + x86_64 for emulators and Chromebooks.
@@ -174,9 +226,13 @@ android {
         viewBinding = true
         buildConfig = true
     }
+    sourceSets["main"].jniLibs.srcDir(azaharLibs)
+
     packaging {
         jniLibs {
-            useLegacyPackaging = false
+            // Compressed inside the APK: the 3DS core alone is 38 MB, ~12 MB
+            // compressed. Android unpacks them when installing.
+            useLegacyPackaging = true
         }
     }
 }

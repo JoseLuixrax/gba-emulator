@@ -24,6 +24,12 @@ object DsKeys {
     const val LID = 1 shl 13
 }
 
+/** The 3DS shoulder buttons the DS doesn't have (the rest reuse GbaKeys and DsKeys). */
+object N3dsKeys {
+    const val ZL = 1 shl 14
+    const val ZR = 1 shl 15
+}
+
 /**
  * Turbo buttons travel in the same key word, shifted up: a held "turbo A" is
  * GbaKeys.A shl SHIFT. The emulator thread turns them into presses and

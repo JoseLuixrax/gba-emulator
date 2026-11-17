@@ -14,8 +14,11 @@ import java.util.zip.ZipInputStream
 object RomLoader {
     val GBA_EXTENSIONS = setOf("gba", "agb", "gb", "gbc", "sgb")
     val DS_EXTENSIONS = setOf("nds")
+
+    /** 3DS: cartridge images, executables, homebrew, CIA and Azahar's compressed ones. Never zipped. */
+    val N3DS_EXTENSIONS = setOf("3ds", "cci", "cxi", "3dsx", "cia", "z3dsx", "zcci", "zcxi")
     val ROM_EXTENSIONS = GBA_EXTENSIONS + DS_EXTENSIONS
-    val SUPPORTED_EXTENSIONS = ROM_EXTENSIONS + "zip"
+    val SUPPORTED_EXTENSIONS = ROM_EXTENSIONS + N3DS_EXTENSIONS + "zip"
 
     /** 32 MiB is the largest GBA cartridge; leave room for odd dumps. */
     private const val MAX_ROM_SIZE = 64L * 1024 * 1024
@@ -44,6 +47,8 @@ object RomLoader {
     fun extensionOf(name: String) = name.substringAfterLast('.', "").lowercase()
 
     fun isSupported(name: String) = extensionOf(name) in SUPPORTED_EXTENSIONS
+
+    fun is3ds(name: String) = extensionOf(name) in N3DS_EXTENSIONS
 
     fun displayName(context: Context, uri: Uri): String {
         if (uri.scheme == "content") {

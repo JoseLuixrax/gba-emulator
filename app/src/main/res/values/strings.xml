@@ -32,6 +32,12 @@
     <string name="error_reading_rom">Could not read the ROM: %1$s</string>
     <string name="error_ds_unsupported">DS games need a phone with a 64-bit processor. This one can still play GBA, GB and GBC games.</string>
     <string name="error_not_a_rom">This file is not a ROM the app can open (Game Boy Advance, Game Boy, Game Boy Color or Nintendo DS).</string>
+    <string name="error_3ds_unsupported">3DS games need a phone with a 64-bit ARM processor, and this one isn’t. It can still play GBA, GB, GBC and DS games.</string>
+    <string name="error_3ds_encrypted">This game is encrypted, and like that it can’t be played. Decrypt your own cartridge or download first (GodMode9 on a 3DS does it) and try again.</string>
+    <string name="error_3ds_not_a_game">There’s no game inside this CIA: it looks like an update or extra content. Open the game itself.</string>
+    <string name="error_3ds_damaged">The file looks damaged or incomplete. Try copying it to the phone again.</string>
+    <string name="error_3ds_start">The 3DS game didn’t start (%1$s).</string>
+    <string name="error_3ds_gles">This phone’s graphics chip lacks what 3DS games need (OpenGL ES 3.2).</string>
     <string name="fps_format">%1$.0f FPS</string>
     <string name="save_state">Save state</string>
     <string name="load_state">Load state</string>
@@ -76,6 +82,8 @@
     <string name="key_x" translatable="false">X (DS)</string>
     <string name="key_y" translatable="false">Y (DS)</string>
     <string name="key_mic">Microphone (DS)</string>
+    <string name="key_zl">ZL (3DS)</string>
+    <string name="key_zr">ZR (3DS)</string>
     <string name="key_turbo_a">Turbo A</string>
     <string name="key_turbo_b">Turbo B</string>
     <string name="key_turbo_x">Turbo X (DS)</string>
@@ -89,7 +97,7 @@
     <string name="key_menu">Menu</string>
     <string name="key_quick_save">Quick save (slot 1)</string>
     <string name="key_quick_load">Quick load (slot 1)</string>
-    <string name="key_swap_screens">Swap screens (DS)</string>
+    <string name="key_swap_screens">Swap screens (DS, 3DS)</string>
     <string name="key_lid">Close / open the lid (DS)</string>
 
     <!-- Key mapping -->
@@ -191,6 +199,13 @@
     <string name="pref_ds_jit_summary">Much faster. Turn it off only if a DS game closes by itself.</string>
     <string name="pref_ds_real_mic">Use the phone’s microphone</string>
     <string name="pref_ds_real_mic_summary">For games that ask you to talk or blow. It’s only on while the game is listening and nothing is saved. The MIC button still works.</string>
+    <string name="pref_cat_3ds">Nintendo 3DS</string>
+    <string name="pref_3ds_resolution">Internal resolution</string>
+    <string name="n3ds_res_1">Original (the fastest)</string>
+    <string name="n3ds_res_2">Double</string>
+    <string name="n3ds_res_3">Triple (powerful phones only)</string>
+    <string name="pref_3ds_new">New 3DS</string>
+    <string name="pref_3ds_new_summary">Plays as a New Nintendo 3DS: more memory, and a few games need it. Used the next time you open a game.</string>
     <string name="mic_permission_denied">Without microphone permission the MIC button is used instead. You can allow it in Android’s settings, under Apps, AdvanceBoy, Permissions.</string>
     <string name="pref_cat_files">Files</string>
     <string name="saves_folder">Open saves folder</string>
@@ -210,9 +225,9 @@
     <string name="pref_cat_about">About</string>
     <string name="pref_about_summary">Version %1$s · Emulation core: mGBA 0.10.5</string>
     <string name="pref_licenses">Open source licenses</string>
-    <string name="pref_licenses_summary">mGBA, melonDS, blip_buf, inih</string>
+    <string name="pref_licenses_summary">mGBA, melonDS, Azahar, blip_buf, inih</string>
     <string name="view_source">Source code</string>
-    <string name="licenses_text">This app uses two emulation cores.\n\nmGBA (GBA, GB and GBC)\nCopyright © 2013-2025 Vicki Pfau and contributors.\nMozilla Public License 2.0. Source code at github.com/mgba-emu/mgba\n\nmelonDS (Nintendo DS)\nCopyright © 2016-2025 melonDS team.\nGNU General Public License v3. Source code at github.com/melonDS-emu/melonDS\nIt includes FreeBIOS (© 2013 Gilead Kutnick, BSD), teakra (MIT), FatFs, xxHash, libslirp, tiny-AES-c and sha1, all under permissive licenses.\n\nSince it includes melonDS, the app as a whole is distributed under the GNU GPL v3. Its full source code is at github.com/JoseLuixrax/gba-emulator\n\nblip_buf © 2003-2009 Shay Green, GNU LGPL 2.1.\ninih © 2009 Ben Hoyt, BSD license.\n\nNintendo DS, Game Boy Advance and Game Boy are trademarks of Nintendo. This app is not affiliated with Nintendo and does not include any games or BIOS.</string>
+    <string name="licenses_text">This app uses three emulation cores.\n\nmGBA (GBA, GB and GBC)\nCopyright © 2013-2025 Vicki Pfau and contributors.\nMozilla Public License 2.0. Source code at github.com/mgba-emu/mgba\n\nmelonDS (Nintendo DS)\nCopyright © 2016-2025 melonDS team.\nGNU General Public License v3. Source code at github.com/melonDS-emu/melonDS\nIt includes FreeBIOS (© 2013 Gilead Kutnick, BSD), teakra (MIT), FatFs, xxHash, libslirp, tiny-AES-c and sha1, all under permissive licenses.\n\nAzahar (Nintendo 3DS)\nCopyright © Azahar Emulator Project and Citra Emulator Project.\nGNU General Public License v3 or later. The app ships, unchanged, the libretro core for Android published by the Azahar project in its release 2126.2; the source code of that version is at github.com/azahar-emu/azahar (tag 2126.2). It includes dynarmic, Boost, fmt, Crypto++, zstd, teakra, glslang and other free libraries.\nlibretro.h © The RetroArch team, MIT license.\n\nSince it includes melonDS and Azahar, the app as a whole is distributed under the GNU GPL v3. Its full source code is at github.com/JoseLuixrax/gba-emulator\n\nblip_buf © 2003-2009 Shay Green, GNU LGPL 2.1.\ninih © 2009 Ben Hoyt, BSD license.\n\nNintendo 3DS, Nintendo DS, Game Boy Advance and Game Boy are trademarks of Nintendo. This app is not affiliated with Nintendo and does not include any games or BIOS.</string>
 
     <!-- Setting values -->
     <string name="filter_sharp">Sharp (recommended)</string>

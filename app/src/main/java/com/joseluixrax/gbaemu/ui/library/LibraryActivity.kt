@@ -22,6 +22,7 @@ import com.joseluixrax.gbaemu.databinding.ActivityLibraryBinding
 import com.joseluixrax.gbaemu.emulator.GameFiles
 import com.joseluixrax.gbaemu.emulator.RomLoader
 import com.joseluixrax.gbaemu.ui.game.GameActivity
+import com.joseluixrax.gbaemu.ui.game.N3dsActivity
 import com.joseluixrax.gbaemu.ui.settings.SettingsActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -149,7 +150,14 @@ class LibraryActivity : AppCompatActivity() {
     }
 
     private fun launchGame(uri: Uri, name: String) {
-        startActivity(GameActivity.intent(this, uri, name))
+        if (RomLoader.is3ds(name)) {
+            // 3DS games run in their own process, which leaves the recent
+            // list to this one.
+            RecentGames.add(this, uri, name)
+            startActivity(N3dsActivity.intent(this, uri, name))
+        } else {
+            startActivity(GameActivity.intent(this, uri, name))
+        }
     }
 
     private fun persistPermission(uri: Uri) {

@@ -85,6 +85,28 @@ if(WITH_NDS)
 	target_compile_options(ndsemu PRIVATE -Wall -Wno-unused-parameter)
 endif()
 
+# 3DS: a small libretro frontend (n3ds/) for the Azahar core, which ships
+# prebuilt for 64-bit ARM only and is loaded at run time.
+set(N3DS_SOURCES n3ds/n3ds_rom.cpp n3ds/n3ds_vfs.cpp n3ds/n3ds_host.cpp n3ds/n3ds_gl.cpp)
+if(ANDROID)
+	if(ANDROID_ABI STREQUAL "arm64-v8a")
+		add_library(n3ds SHARED ${N3DS_SOURCES} n3ds/n3ds_android.cpp)
+		target_link_libraries(n3ds PRIVATE EGL GLESv3 android aaudio log dl z)
+		set_target_properties(n3ds PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
+		target_link_options(n3ds PRIVATE "-Wl,--exclude-libs,ALL" "-Wl,--gc-sections" "-Wl,-z,max-page-size=16384")
+		target_compile_options(n3ds PRIVATE -Wall -Wno-unused-parameter)
+	endif()
+else()
+	# Desktop test (native-test/n3ds_host_test) needs EGL, e.g. Mesa's.
+	find_library(EGL_LIBRARY EGL)
+	if(EGL_LIBRARY)
+		add_library(n3dshost STATIC ${N3DS_SOURCES})
+		target_include_directories(n3dshost PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/n3ds")
+		target_link_libraries(n3dshost PUBLIC ${EGL_LIBRARY} dl pthread)
+		target_compile_options(n3dshost PRIVATE -Wall -Wno-unused-parameter)
+	endif()
+endif()
+
 target_include_directories(gbaemu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 # mGBA's headers expect the same feature macros its own sources get.
 target_compile_definitions(gbaemu PRIVATE _GNU_SOURCE)

@@ -2,6 +2,7 @@ package com.joseluixrax.gbaemu.ui.game
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
@@ -15,6 +16,7 @@ import android.view.View
 import androidx.preference.PreferenceManager
 import com.joseluixrax.gbaemu.emulator.DsKeys
 import com.joseluixrax.gbaemu.emulator.GbaKeys
+import com.joseluixrax.gbaemu.emulator.N3dsKeys
 import com.joseluixrax.gbaemu.emulator.TurboKeys
 import java.util.EnumMap
 import kotlin.math.atan2
@@ -47,8 +49,11 @@ class VirtualPadView @JvmOverloads constructor(
         fun onScreenTouch(x: Int, y: Int) {}
         fun onScreenRelease() {}
 
-        /** DS: the swap screens button. */
+        /** DS and 3DS: the swap screens button. */
         fun onSwapScreens() {}
+
+        /** 3DS circle pad, -1..1 each way (y grows downwards); 0, 0 when let go. */
+        fun onStick(x: Float, y: Float) {}
     }
 
     var listener: Listener? = null
@@ -102,8 +107,8 @@ class VirtualPadView @JvmOverloads constructor(
             }
         }
 
-    /** DS game: X, Y, mic and swap buttons, its own layouts, touch screen. */
-    var dsMode = false
+    /** The console: which buttons there are and which saved layout to use. */
+    var padMode = PadMode.GBA
         set(value) {
             if (field != value) {
                 field = value
@@ -112,8 +117,21 @@ class VirtualPadView @JvmOverloads constructor(
             }
         }
 
-    /** Where the DS bottom screen is, in this view's pixels (see [DsScreens]). */
+    /** DS game: X, Y, mic and swap buttons, its own layouts, touch screen. */
+    var dsMode: Boolean
+        get() = padMode == PadMode.DS
+        set(value) {
+            padMode = if (value) PadMode.DS else PadMode.GBA
+        }
+
+    private val hasTouchScreen get() = padMode != PadMode.GBA
+
+    /** Where the touch screen is, in this view's pixels (see [DsScreens]). */
     var touchScreenArea: (() -> RectF?)? = null
+
+    /** Size of the touch screen in the console's own coordinates. */
+    var touchResolutionX = 256
+    var touchResolutionY = 192
 
     var editMode = false
         set(value) {
@@ -123,7 +141,8 @@ class VirtualPadView @JvmOverloads constructor(
             invalidate()
         }
 
-    private val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    /** Where layouts are saved. 3DS games (another process) use a file of their own. */
+    var layoutPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     private val haptics = Haptics(context)
     private var layout: MutableMap<PadElement, Placement> = mutableMapOf()
     private val rects = EnumMap<PadElement, RectF>(PadElement::class.java)
@@ -135,6 +154,10 @@ class VirtualPadView @JvmOverloads constructor(
     // The finger acting as the DS stylus, and the screen area it started in.
     private var stylusPointer = -1
     private var stylusArea: RectF? = null
+
+    // 3DS circle pad: where the thumb is, -1..1.
+    private var stickX = 0f
+    private var stickY = 0f
     private val pressed = HashSet<PadElement>()
     private var currentKeys = 0
 
@@ -183,19 +206,19 @@ class VirtualPadView @JvmOverloads constructor(
     /** Re-reads the saved layout for the current orientation. */
     fun reloadLayout() {
         if (width == 0 || height == 0) return
-        layout = PadLayout.load(prefs, width, height, dsMode)
+        layout = PadLayout.load(layoutPrefs, width, height, padMode)
         computeRects()
         invalidate()
     }
 
     fun saveLayout() {
         if (width == 0 || height == 0) return
-        PadLayout.save(prefs, width > height, dsMode, layout)
+        PadLayout.save(layoutPrefs, width > height, padMode, layout)
     }
 
     fun resetLayoutToDefaults() {
         if (width == 0 || height == 0) return
-        layout = PadLayout.defaults(width, height, dsMode)
+        layout = PadLayout.defaults(width, height, padMode)
         computeRects()
         invalidate()
     }
@@ -223,8 +246,10 @@ class VirtualPadView @JvmOverloads constructor(
     }
 
     private fun isShown(element: PadElement) = when (element) {
-        PadElement.REWIND -> showRewind && !dsMode
-        PadElement.X, PadElement.Y, PadElement.MIC, PadElement.SWAP -> dsMode
+        PadElement.REWIND -> showRewind && padMode != PadMode.N3DS
+        PadElement.X, PadElement.Y, PadElement.SWAP -> padMode != PadMode.GBA
+        PadElement.MIC -> padMode == PadMode.DS
+        PadElement.STICK, PadElement.ZL, PadElement.ZR -> padMode == PadMode.N3DS
         PadElement.TURBO_A, PadElement.TURBO_B -> showTurbo
         else -> true
     }
@@ -242,6 +267,7 @@ class VirtualPadView @JvmOverloads constructor(
             setPaints(alpha, isPressed)
             when (element.shape) {
                 PadElement.Shape.DPAD -> drawDpad(canvas, r, alpha)
+                PadElement.Shape.STICK -> drawStick(canvas, r, alpha)
                 PadElement.Shape.CIRCLE -> {
                     val radius = min(r.width(), r.height()) / 2
                     canvas.drawCircle(r.centerX(), r.centerY(), radius, fillPaint)
@@ -319,6 +345,21 @@ class VirtualPadView @JvmOverloads constructor(
         drawArrow(canvas, cx + off, cy, a, 1)
     }
 
+    /** Circle pad: the base, and the thumb where the finger has it. */
+    private fun drawStick(canvas: Canvas, r: RectF, alpha: Float) {
+        val radius = min(r.width(), r.height()) / 2
+        setPaints(alpha, false)
+        canvas.drawCircle(r.centerX(), r.centerY(), radius, fillPaint)
+        canvas.drawCircle(r.centerX(), r.centerY(), radius, strokePaint)
+        val held = touches.values.any { it.element == PadElement.STICK }
+        setPaints(alpha, held)
+        val knob = radius * 0.42f
+        val travel = radius - knob
+        canvas.drawCircle(r.centerX() + stickX * travel, r.centerY() + stickY * travel, knob, fillPaint)
+        canvas.drawCircle(r.centerX() + stickX * travel, r.centerY() + stickY * travel, knob, strokePaint)
+        setPaints(alpha, false)
+    }
+
     /** direction: 0 up, 1 right, 2 down, 3 left. */
     private fun drawArrow(canvas: Canvas, x: Float, y: Float, size: Float, direction: Int) {
         val p = Path()
@@ -349,7 +390,7 @@ class VirtualPadView @JvmOverloads constructor(
                 val i = event.actionIndex
                 val x = event.getX(i)
                 val y = event.getY(i)
-                val screen = if (dsMode && stylusPointer == -1) touchScreenArea?.invoke() else null
+                val screen = if (hasTouchScreen && stylusPointer == -1) touchScreenArea?.invoke() else null
                 val onScreen = screen != null && screen.contains(x, y)
                 // Buttons drawn over the screen win, unless they're hidden.
                 val element = if (onScreen && !padVisible) null else hitTest(x, y, PadElement.entries)
@@ -391,9 +432,17 @@ class VirtualPadView @JvmOverloads constructor(
     private fun moveStylus(x: Float, y: Float) {
         val area = stylusArea ?: return
         if (area.width() <= 0f || area.height() <= 0f) return
-        val dsX = ((x - area.left) / area.width() * 256f).toInt().coerceIn(0, 255)
-        val dsY = ((y - area.top) / area.height() * 192f).toInt().coerceIn(0, 191)
+        val dsX = ((x - area.left) / area.width() * touchResolutionX).toInt().coerceIn(0, touchResolutionX - 1)
+        val dsY = ((y - area.top) / area.height() * touchResolutionY).toInt().coerceIn(0, touchResolutionY - 1)
         listener?.onScreenTouch(dsX, dsY)
+    }
+
+    private fun moveStick(x: Float, y: Float) {
+        if (x == stickX && y == stickY) return
+        stickX = x
+        stickY = y
+        listener?.onStick(x, y)
+        invalidate()
     }
 
     private fun releaseStylus() {
@@ -427,6 +476,7 @@ class VirtualPadView @JvmOverloads constructor(
 
     private fun onTouchEnd(touch: Touch) {
         when (touch.element) {
+            PadElement.STICK -> moveStick(0f, 0f)
             PadElement.FAST_FORWARD -> listener?.onFastForwardButton(false)
             PadElement.REWIND -> listener?.onRewindButton(false)
             else -> Unit
@@ -437,6 +487,20 @@ class VirtualPadView @JvmOverloads constructor(
         when (touch.element) {
             PadElement.DPAD -> {
                 touch.keys = dpadKeys(rects[PadElement.DPAD] ?: return, x, y)
+            }
+            PadElement.STICK -> {
+                // Keeps following the thumb outside the circle, like the D-pad.
+                val r = rects[PadElement.STICK] ?: return
+                val radius = min(r.width(), r.height()) / 2 * STICK_TRAVEL
+                var dx = (x - r.centerX()) / radius
+                var dy = (y - r.centerY()) / radius
+                val length = hypot(dx, dy)
+                if (length > 1f) {
+                    dx /= length
+                    dy /= length
+                }
+                moveStick(dx, dy)
+                touch.keys = 0
             }
             PadElement.MENU, PadElement.FAST_FORWARD, PadElement.REWIND, PadElement.SWAP -> touch.keys = 0
             PadElement.START, PadElement.SELECT, PadElement.MIC -> touch.keys = keyFor(touch.element)
@@ -494,6 +558,8 @@ class VirtualPadView @JvmOverloads constructor(
         PadElement.X -> DsKeys.X
         PadElement.Y -> DsKeys.Y
         PadElement.MIC -> DsKeys.MIC
+        PadElement.ZL -> N3dsKeys.ZL
+        PadElement.ZR -> N3dsKeys.ZR
         PadElement.TURBO_A -> GbaKeys.A shl TurboKeys.SHIFT
         PadElement.TURBO_B -> GbaKeys.B shl TurboKeys.SHIFT
         else -> 0
@@ -532,7 +598,7 @@ class VirtualPadView @JvmOverloads constructor(
         for (element in candidates) {
             if (!isShown(element)) continue
             val r = rects[element] ?: continue
-            val slop = if (element == PadElement.DPAD) 0.15f else 0.25f
+            val slop = if (element == PadElement.DPAD || element == PadElement.STICK) 0.15f else 0.25f
             val halfW = r.width() / 2 * (1 + slop)
             val halfH = r.height() / 2 * (1 + slop) + (if (element.shape == PadElement.Shape.PILL) 6 * density else 0f)
             val dx = x - r.centerX()
@@ -584,8 +650,11 @@ class VirtualPadView @JvmOverloads constructor(
     private companion object {
         val SLIDABLE = listOf(
             PadElement.A, PadElement.B, PadElement.X, PadElement.Y, PadElement.L, PadElement.R,
-            PadElement.TURBO_A, PadElement.TURBO_B,
+            PadElement.ZL, PadElement.ZR, PadElement.TURBO_A, PadElement.TURBO_B,
         )
+
+        // How far the thumb goes for a full push, in circle pad radii.
+        const val STICK_TRAVEL = 0.8f
 
         // Buttons that do something in the app rather than press a key.
         val TAP_BUTTONS = setOf(PadElement.MENU, PadElement.FAST_FORWARD, PadElement.REWIND, PadElement.SWAP)

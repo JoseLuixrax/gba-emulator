@@ -8,8 +8,8 @@ import androidx.preference.PreferenceManager
  * Typed access to the settings screen values (res/xml/preferences.xml).
  * Keys here must match the android:key attributes in that file.
  */
-class Prefs(context: Context) {
-    val raw: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+class Prefs(val raw: SharedPreferences) {
+    constructor(context: Context) : this(PreferenceManager.getDefaultSharedPreferences(context))
 
     // Video
     val videoFilter: String get() = raw.getString(KEY_VIDEO_FILTER, "sharp") ?: "sharp"
@@ -65,6 +65,11 @@ class Prefs(context: Context) {
     val dsNickname: String get() = raw.getString(KEY_DS_NICKNAME, "")?.trim().orEmpty()
     val dsJit: Boolean get() = raw.getBoolean(KEY_DS_JIT, true)
 
+    // Nintendo 3DS
+    /** Internal resolution: 1 = the console's own, 2 and 3 sharper (and heavier). */
+    val n3dsResolution: String get() = raw.getString(KEY_3DS_RESOLUTION, "1") ?: "1"
+    val n3dsNewModel: Boolean get() = raw.getBoolean(KEY_3DS_NEW, true)
+
     /** Record the phone's microphone while a DS game listens (needs RECORD_AUDIO). */
     val dsRealMic: Boolean get() = raw.getBoolean(KEY_DS_REAL_MIC, false)
 
@@ -110,6 +115,17 @@ class Prefs(context: Context) {
         const val KEY_DS_NICKNAME = "ds_nickname"
         const val KEY_DS_JIT = "ds_jit"
         const val KEY_DS_REAL_MIC = "ds_real_mic"
+        const val KEY_3DS_RESOLUTION = "3ds_resolution"
+        const val KEY_3DS_NEW = "3ds_new_model"
+
+        /**
+         * The settings as another process sees them right now: 3DS games run
+         * in their own process and re-read the file instead of trusting a copy.
+         */
+        @Suppress("DEPRECATION")
+        fun fresh(context: Context) = Prefs(
+            context.getSharedPreferences(context.packageName + "_preferences", Context.MODE_MULTI_PROCESS),
+        )
         const val KEY_ABOUT = "about"
         const val KEY_OPEN_SAVES = "open_saves_folder"
         const val KEY_LICENSES = "licenses"

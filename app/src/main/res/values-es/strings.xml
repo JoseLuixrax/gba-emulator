@@ -29,6 +29,12 @@
     <string name="error_title">No se puede iniciar el juego</string>
     <string name="error_reading_rom">No se pudo leer la ROM: %1$s</string>
     <string name="error_ds_unsupported">Los juegos de DS necesitan un móvil con procesador de 64 bits. En este puedes seguir jugando a GBA, GB y GBC.</string>
+    <string name="error_3ds_unsupported">Los juegos de 3DS necesitan un móvil con procesador ARM de 64 bits, y este no lo es. En este puedes seguir jugando a GBA, GB, GBC y DS.</string>
+    <string name="error_3ds_encrypted">Este juego está cifrado y así no se puede jugar. Descifra antes tu cartucho o tu descarga (en una 3DS se hace con GodMode9) y vuelve a probar.</string>
+    <string name="error_3ds_not_a_game">Este CIA no lleva ningún juego dentro: parece una actualización o un contenido extra. Abre el juego en sí.</string>
+    <string name="error_3ds_damaged">El archivo parece dañado o incompleto. Prueba a copiarlo otra vez al móvil.</string>
+    <string name="error_3ds_start">El juego de 3DS no ha arrancado (%1$s).</string>
+    <string name="error_3ds_gles">La gráfica de este móvil no tiene lo que piden los juegos de 3DS (OpenGL ES 3.2).</string>
     <string name="error_not_a_rom">Este archivo no es una ROM que la app pueda abrir (Game Boy Advance, Game Boy, Game Boy Color o Nintendo DS).</string>
     <string name="fps_format">%1$.0f FPS</string>
     <string name="save_state">Guardar estado</string>
@@ -68,6 +74,8 @@
     <string name="key_left">Izquierda</string>
     <string name="key_right">Derecha</string>
     <string name="key_mic">Micrófono (DS)</string>
+    <string name="key_zl">ZL (3DS)</string>
+    <string name="key_zr">ZR (3DS)</string>
     <string name="key_turbo_a">Turbo A</string>
     <string name="key_turbo_b">Turbo B</string>
     <string name="key_turbo_x">Turbo X (DS)</string>
@@ -77,7 +85,7 @@
     <string name="key_menu">Menú</string>
     <string name="key_quick_save">Guardado rápido (ranura 1)</string>
     <string name="key_quick_load">Carga rápida (ranura 1)</string>
-    <string name="key_swap_screens">Intercambiar pantallas (DS)</string>
+    <string name="key_swap_screens">Intercambiar pantallas (DS, 3DS)</string>
     <string name="key_lid">Cerrar / abrir la tapa (DS)</string>
 
     <!-- Mapeo de botones -->
@@ -178,6 +186,13 @@
     <string name="pref_ds_jit_summary">Mucho más rápido. Desactívalo solo si un juego de DS se cierra solo.</string>
     <string name="pref_ds_real_mic">Usar el micrófono del móvil</string>
     <string name="pref_ds_real_mic_summary">Para los juegos que piden hablar o soplar. Solo se enciende mientras el juego escucha y no se guarda nada. El botón MIC sigue funcionando.</string>
+    <string name="pref_cat_3ds">Nintendo 3DS</string>
+    <string name="pref_3ds_resolution">Resolución interna</string>
+    <string name="n3ds_res_1">Original (la más rápida)</string>
+    <string name="n3ds_res_2">Doble</string>
+    <string name="n3ds_res_3">Triple (solo móviles potentes)</string>
+    <string name="pref_3ds_new">New 3DS</string>
+    <string name="pref_3ds_new_summary">Juega como una New Nintendo 3DS: más memoria, y algunos juegos la necesitan. Se aplica la próxima vez que abras un juego.</string>
     <string name="mic_permission_denied">Sin permiso para el micrófono se usa el botón MIC. Puedes darlo en los ajustes de Android, en Aplicaciones, AdvanceBoy, Permisos.</string>
     <string name="pref_cat_files">Archivos</string>
     <string name="saves_folder">Abrir carpeta de partidas</string>
@@ -197,9 +212,9 @@
     <string name="pref_cat_about">Acerca de</string>
     <string name="pref_about_summary">Versión %1$s · Núcleo de emulación: mGBA 0.10.5</string>
     <string name="pref_licenses">Licencias de código abierto</string>
-    <string name="pref_licenses_summary">mGBA, melonDS, blip_buf, inih</string>
+    <string name="pref_licenses_summary">mGBA, melonDS, Azahar, blip_buf, inih</string>
     <string name="view_source">Código fuente</string>
-    <string name="licenses_text">Esta app usa dos núcleos de emulación.\n\nmGBA (GBA, GB y GBC)\nCopyright © 2013-2025 Vicki Pfau y colaboradores.\nLicencia Mozilla Public License 2.0. Código fuente en github.com/mgba-emu/mgba\n\nmelonDS (Nintendo DS)\nCopyright © 2016-2025 equipo de melonDS.\nLicencia GNU General Public License v3. Código fuente en github.com/melonDS-emu/melonDS\nIncluye FreeBIOS (© 2013 Gilead Kutnick, BSD), teakra (MIT), FatFs, xxHash, libslirp, tiny-AES-c y sha1, todas con licencias permisivas.\n\nAl incluir melonDS, la app en su conjunto se distribuye bajo la GNU GPL v3. Su código fuente completo está en github.com/JoseLuixrax/gba-emulator\n\nblip_buf © 2003-2009 Shay Green, GNU LGPL 2.1.\ninih © 2009 Ben Hoyt, licencia BSD.\n\nNintendo DS, Game Boy Advance y Game Boy son marcas de Nintendo. Esta app no está afiliada a Nintendo y no incluye juegos ni BIOS.</string>
+    <string name="licenses_text">Esta app usa tres núcleos de emulación.\n\nmGBA (GBA, GB y GBC)\nCopyright © 2013-2025 Vicki Pfau y colaboradores.\nLicencia Mozilla Public License 2.0. Código fuente en github.com/mgba-emu/mgba\n\nmelonDS (Nintendo DS)\nCopyright © 2016-2025 equipo de melonDS.\nLicencia GNU General Public License v3. Código fuente en github.com/melonDS-emu/melonDS\nIncluye FreeBIOS (© 2013 Gilead Kutnick, BSD), teakra (MIT), FatFs, xxHash, libslirp, tiny-AES-c y sha1, todas con licencias permisivas.\n\nAzahar (Nintendo 3DS)\nCopyright © Azahar Emulator Project y Citra Emulator Project.\nLicencia GNU General Public License v3 o posterior. La app lleva, sin cambios, el núcleo libretro para Android que publica el proyecto Azahar en su release 2126.2; el código fuente de esa versión está en github.com/azahar-emu/azahar (etiqueta 2126.2). Incluye dynarmic, Boost, fmt, Crypto++, zstd, teakra, glslang y otras librerías libres.\nlibretro.h © The RetroArch team, licencia MIT.\n\nAl incluir melonDS y Azahar, la app en su conjunto se distribuye bajo la GNU GPL v3. Su código fuente completo está en github.com/JoseLuixrax/gba-emulator\n\nblip_buf © 2003-2009 Shay Green, GNU LGPL 2.1.\ninih © 2009 Ben Hoyt, licencia BSD.\n\nNintendo 3DS, Nintendo DS, Game Boy Advance y Game Boy son marcas de Nintendo. Esta app no está afiliada a Nintendo y no incluye juegos ni BIOS.</string>
 
     <!-- Valores de ajustes -->
     <string name="filter_sharp">Nítido (recomendado)</string>

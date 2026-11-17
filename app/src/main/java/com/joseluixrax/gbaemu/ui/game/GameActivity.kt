@@ -1,7 +1,6 @@
 package com.joseluixrax.gbaemu.ui.game
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -11,8 +10,6 @@ import android.net.Uri
 import android.opengl.GLSurfaceView
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -55,7 +52,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -741,7 +737,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         val thumbFile = files.thumbnailFile(slot)
         emulator.post {
             val ok = emulator.core.saveState(stateFile.path)
-            if (ok && thumbnail != null) writePng(thumbnail, thumbFile)
+            if (ok && thumbnail != null) Screenshots.writePng(thumbnail, thumbFile)
             if (!quiet) {
                 runOnUiThread {
                     toast(if (ok) getString(R.string.state_saved, slotName(slot)) else getString(R.string.state_save_failed))
@@ -770,14 +766,6 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     private fun slotName(slot: Int) =
         if (slot == GameFiles.AUTO_SLOT) getString(R.string.slot_auto) else getString(R.string.slot_number, slot)
 
-    private fun writePng(bitmap: Bitmap, file: File) {
-        try {
-            file.parentFile?.mkdirs()
-            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        } catch (_: Exception) {
-        }
-    }
-
     private fun takeScreenshot() {
         val frame = frameBuffer.toBitmap() ?: return
         // Native resolution is tiny on a phone gallery: save it bigger, pixel-sharp.
@@ -786,33 +774,11 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val name = "${gameName}_$stamp.png"
         lifecycleScope.launch(Dispatchers.IO) {
-            val saved = saveToGallery(big, name)
+            val saved = Screenshots.saveToGallery(this@GameActivity, big, name)
             withContext(Dispatchers.Main) {
                 toast(if (saved != null) getString(R.string.screenshot_saved, saved) else getString(R.string.screenshot_failed))
             }
         }
-    }
-
-    /** Returns a human readable location, or null on failure. */
-    private fun saveToGallery(bitmap: Bitmap, name: String): String? = try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val values = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, name)
-                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + getString(R.string.app_name))
-            }
-            val uri: Uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-                ?: throw IllegalStateException("MediaStore insert failed")
-            contentResolver.openOutputStream(uri)?.use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
-            Environment.DIRECTORY_PICTURES + "/" + getString(R.string.app_name)
-        } else {
-            val dir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "screenshots").apply { mkdirs() }
-            val file = File(dir, name)
-            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
-            file.path
-        }
-    } catch (_: Exception) {
-        null
     }
 
     // ---------------------------------------------------------------- cheats

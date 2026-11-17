@@ -47,6 +47,8 @@
                 <data android:mimeType="application/x-gameboy-rom" />
                 <data android:mimeType="application/x-gameboy-color-rom" />
                 <data android:mimeType="application/x-nintendo-ds-rom" />
+                <data android:mimeType="application/x-ctr-3ds" />
+                <data android:mimeType="application/x-ctr-cia" />
             </intent-filter>
         </activity>
 
@@ -55,6 +57,17 @@
             android:name=".ui.game.GameActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density"
             android:exported="false"
+            android:resizeableActivity="true"
+            android:screenOrientation="unspecified"
+            android:theme="@style/Theme.AdvanceBoy.Game" />
+
+        <!-- 3DS games run in a process of their own: the core keeps a lot of
+             global state, and a fresh process gives every game a clean start. -->
+        <activity
+            android:name=".ui.game.N3dsActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density"
+            android:exported="false"
+            android:process=":n3ds"
             android:resizeableActivity="true"
             android:screenOrientation="unspecified"
             android:theme="@style/Theme.AdvanceBoy.Game" />

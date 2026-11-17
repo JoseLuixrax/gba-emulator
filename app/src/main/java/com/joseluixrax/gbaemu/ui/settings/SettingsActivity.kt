@@ -1,6 +1,7 @@
 package com.joseluixrax.gbaemu.ui.settings
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -67,6 +68,7 @@ class SettingsActivity : AppCompatActivity() {
                     .setMessage(R.string.pref_reset_layout_confirm)
                     .setPositiveButton(R.string.reset_short) { _, _ ->
                         PadLayout.reset(preferenceManager.sharedPreferences!!)
+                        PadLayout.reset(requireContext().getSharedPreferences(PadLayout.N3DS_PREFS, Context.MODE_PRIVATE))
                         toast(R.string.layout_reset_done)
                     }
                     .setNegativeButton(android.R.string.cancel, null)

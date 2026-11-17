@@ -14,3 +14,10 @@ target_link_libraries(host_test PRIVATE gbaemu)
 
 add_executable(nds_host_test nds_host_test.cpp)
 target_link_libraries(nds_host_test PRIVATE ndsemu)
+
+# 3DS host test: needs EGL (Mesa) and the Azahar libretro core for Linux.
+#   ./build/native-test/n3ds_host_test azahar_libretro.so native-test/3ds-roms/test.3dsx build/native-test/out-3ds
+if(TARGET n3dshost)
+	add_executable(n3ds_host_test n3ds_host_test.cpp)
+	target_link_libraries(n3ds_host_test PRIVATE n3dshost)
+endif()

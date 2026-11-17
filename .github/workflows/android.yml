@@ -21,10 +21,13 @@ concurrency:
 env:
   MGBA_VERSION: "0.10.5"
   MELONDS_VERSION: "1.1"
+  # 3DS: the Azahar libretro core for Linux, to test our libretro host with it.
+  AZAHAR_VERSION: "2126.2"
+  AZAHAR_LINUX_SHA256: "2223444b74de2c922bae1efcfed60002f696b3c2aaf4fc73fc03e66a395dc26e"
 
 jobs:
-  # Runs both emulation cores on Linux: the GBA test ROMs in native-test/roms
-  # and the DS test ROM in native-test/nds-roms.
+  # Runs the emulation cores on Linux: the GBA test ROMs in native-test/roms,
+  # the DS test ROM in native-test/nds-roms and the 3DS one in native-test/3ds-roms.
   native-tests:
     name: Native core tests
     runs-on: ubuntu-latest
@@ -44,10 +47,20 @@ jobs:
           mv "third_party/mgba-${MGBA_VERSION}" third_party/mgba
           mv "third_party/melonDS-${MELONDS_VERSION}" third_party/melonds
 
+      - name: Download the Azahar core (3DS)
+        run: |
+          curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o azahar.zip \
+            "https://github.com/azahar-emu/azahar/releases/download/${AZAHAR_VERSION}/azahar-libretro-linux-x86_64-${AZAHAR_VERSION}.zip"
+          echo "${AZAHAR_LINUX_SHA256}  azahar.zip" | sha256sum -c -
+          mkdir -p third_party/azahar-linux
+          unzip -o azahar.zip azahar_libretro.so -d third_party/azahar-linux
+
       - name: Build test harness
         run: |
           # DS states are zlib compressed; the runner image normally has it.
-          test -f /usr/include/zlib.h || { sudo apt-get update && sudo apt-get install -y zlib1g-dev; }
+          # The 3DS test draws with Mesa's software OpenGL through EGL.
+          sudo apt-get update
+          sudo apt-get install -y zlib1g-dev libegl-dev libegl-mesa0 libgl1-mesa-dri
           cmake -S native-test -B build/native-test -DCMAKE_BUILD_TYPE=Release \
             -DMGBA_DIR="$PWD/third_party/mgba" -DMELONDS_DIR="$PWD/third_party/melonds"
           cmake --build build/native-test -j"$(nproc)"
@@ -57,6 +70,11 @@ jobs:
 
       - name: Run DS test ROM
         run: ./build/native-test/nds_host_test native-test/nds-roms/test.nds build/native-test/out-nds
+
+      - name: Run 3DS test ROM
+        run: |
+          ./build/native-test/n3ds_host_test third_party/azahar-linux/azahar_libretro.so \
+            native-test/3ds-roms/test.3dsx build/native-test/out-3ds
 
       - name: Upload screenshots
         if: always()
@@ -84,13 +102,14 @@ jobs:
       - name: Build release APK
         run: ./gradlew --no-daemon --stacktrace assembleRelease
 
-      # Both cores must be inside: GBA everywhere, DS on 64-bit only.
+      # All cores must be inside: GBA everywhere, DS on 64-bit only, 3DS on 64-bit ARM.
       - name: Check native libraries
         run: |
           APK=app/build/outputs/apk/release/app-release.apk
           unzip -l "$APK" 'lib/*'
           for lib in lib/arm64-v8a/libgbaemu.so lib/armeabi-v7a/libgbaemu.so lib/x86_64/libgbaemu.so \
-                     lib/arm64-v8a/libndsemu.so lib/x86_64/libndsemu.so; do
+                     lib/arm64-v8a/libndsemu.so lib/x86_64/libndsemu.so \
+                     lib/arm64-v8a/libn3ds.so lib/arm64-v8a/libazahar_libretro.so; do
             unzip -l "$APK" "$lib" > /dev/null || { echo "::error::$lib missing from the APK"; exit 1; }
           done
 
@@ -134,4 +153,4 @@ jobs:
             Enlace fijo a la última versión:
             https://github.com/${{ github.repository }}/releases/latest/download/AdvanceBoy.apk
 
-            Requiere Android 8.0 o superior (los juegos de DS, un móvil de 64 bits). Se instala encima de versiones anteriores sin perder partidas.
+            Requiere Android 8.0 o superior. Los juegos de DS piden un móvil de 64 bits, y los de 3DS un móvil ARM de 64 bits con OpenGL ES 3.2 (y cuanto más potente, mejor). Se instala encima de versiones anteriores sin perder partidas.
