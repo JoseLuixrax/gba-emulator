@@ -9,6 +9,7 @@
 #include <aaudio/AAudio.h>
 #include <android/log.h>
 #include <android/native_window_jni.h>
+#include <dlfcn.h>
 #include <jni.h>
 #include <zlib.h>
 
@@ -139,8 +140,12 @@ AAudioStream* tryOpenAudio(int32_t rate) {
 	if (rate > 0) {
 		AAudioStreamBuilder_setSampleRate(builder, rate);
 	}
-	AAudioStreamBuilder_setUsage(builder, AAUDIO_USAGE_GAME);
-	AAudioStreamBuilder_setContentType(builder, AAUDIO_CONTENT_TYPE_MUSIC);
+	// "Game" audio (Android 9 and later): looked up so Android 8 still loads us.
+	using SetInt = void (*)(AAudioStreamBuilder*, int32_t);
+	static auto setUsage = (SetInt) dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setUsage");
+	static auto setContentType = (SetInt) dlsym(RTLD_DEFAULT, "AAudioStreamBuilder_setContentType");
+	if (setUsage) setUsage(builder, AAUDIO_USAGE_GAME);
+	if (setContentType) setContentType(builder, AAUDIO_CONTENT_TYPE_MUSIC);
 	AAudioStream* stream = nullptr;
 	if (AAudioStreamBuilder_openStream(builder, &stream) != AAUDIO_OK) {
 		stream = nullptr;
