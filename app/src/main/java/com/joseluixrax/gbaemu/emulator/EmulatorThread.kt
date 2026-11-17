@@ -34,6 +34,9 @@ class EmulatorThread(
 
         /** The game turned the rumble motor on during the last frame. */
         fun onRumble()
+
+        /** The game started or stopped listening to the microphone (DS). */
+        fun onMicWanted(wanted: Boolean) {}
     }
 
     /** The core being run. Set it on this thread, right after loading a game. */
@@ -69,6 +72,8 @@ class EmulatorThread(
 
     /** Audio speed currently set in the core (1 = normal). */
     private var coreAudioSpeed = 1f
+
+    private var micWanted = false
 
     private var fpsFrames = 0
     private var fpsStart = 0L
@@ -130,6 +135,11 @@ class EmulatorThread(
                     else -> stepNormal(nextFrameTime)
                 }
                 if (core.pollRumble()) callbacks.onRumble()
+                val wantsMic = core.micWanted()
+                if (wantsMic != micWanted) {
+                    micWanted = wantsMic
+                    callbacks.onMicWanted(wantsMic)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Emulation error", e)
                 paused = true

@@ -3,6 +3,7 @@
 #include "Platform.h"
 #include "SPI_Firmware.h"
 
+#include "nds_mic.h"
 #include "nds_session.h"
 
 #include <dlfcn.h>
@@ -318,12 +319,23 @@ void Camera_Start(int num, void* userdata) {}
 void Camera_Stop(int num, void* userdata) {}
 void Camera_CaptureFrame(int num, u32* frame, int width, int height, bool yuv, void* userdata) {}
 
-void Mic_Start(void* userdata) {}
-void Mic_Stop(void* userdata) {}
+// The game opened or closed the mic: the app records only in between.
+void Mic_Start(void* userdata) {
+	ndsMicSetWanted(true);
+}
+
+void Mic_Stop(void* userdata) {
+	ndsMicSetWanted(false);
+}
 
 int Mic_ReadInput(s16* data, int maxlength, void* userdata) {
 	NdsSession* session = static_cast<NdsSession*>(userdata);
 	if (!session || !session->micBlow) {
+		if (ndsMicLive()) {
+			// Only what was recorded: with nothing new melonDS keeps the
+			// last sample for a moment instead of hearing gaps of silence.
+			return ndsMicRead(data, maxlength);
+		}
 		memset(data, 0, sizeof(s16) * maxlength);
 		return maxlength;
 	}

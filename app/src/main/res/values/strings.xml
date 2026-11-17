@@ -178,6 +178,9 @@
     <string name="lid_closed_hint">Lid closed. Most games sleep until you open it again from the menu.</string>
     <string name="pref_ds_jit">Fast mode (JIT)</string>
     <string name="pref_ds_jit_summary">Much faster. Turn it off only if a DS game closes by itself.</string>
+    <string name="pref_ds_real_mic">Use the phone’s microphone</string>
+    <string name="pref_ds_real_mic_summary">For games that ask you to talk or blow. It’s only on while the game is listening and nothing is saved. The MIC button still works.</string>
+    <string name="mic_permission_denied">Without microphone permission the MIC button is used instead. You can allow it in Android’s settings, under Apps, AdvanceBoy, Permissions.</string>
     <string name="pref_cat_files">Files</string>
     <string name="saves_folder">Open saves folder</string>
     <string name="pref_open_saves_summary">Your .sav files and save states. They also appear in the Files app as “AdvanceBoy”.</string>

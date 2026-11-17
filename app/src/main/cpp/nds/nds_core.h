@@ -65,6 +65,14 @@ void nds_set_keys(uint32_t keys);
 void nds_touch(int x, int y, bool down);
 /* Feed a "blowing into the mic" sound while true. */
 void nds_set_mic_blow(bool blowing);
+/* The phone's microphone. While "live", melonDS gets the pushed samples
+ * (mono, 16-bit, ~48 kHz) instead of silence; the blow button still wins.
+ * nds_mic_wanted() tells whether the game is listening right now. */
+void nds_set_mic_live(bool live);
+void nds_push_mic(const int16_t* samples, size_t count);
+bool nds_mic_wanted(void);
+size_t nds_mic_buffered(void);
+
 /* Close or open the console's lid (most games go to sleep while closed). */
 void nds_set_lid(bool closed);
 bool nds_lid_closed(void);

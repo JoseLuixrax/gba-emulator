@@ -1,15 +1,19 @@
 package com.joseluixrax.gbaemu.ui.settings
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.text.InputFilter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
+import androidx.preference.SwitchPreferenceCompat
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.joseluixrax.gbaemu.BuildConfig
@@ -42,6 +46,15 @@ class SettingsActivity : AppCompatActivity() {
             if (uri != null) installBios(uri)
         }
 
+        // The phone's microphone for DS games: the switch only turns on once Android allows it.
+        private val micPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                findPreference<SwitchPreferenceCompat>(Prefs.KEY_DS_REAL_MIC)?.isChecked = true
+            } else {
+                toast(R.string.mic_permission_denied)
+            }
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
 
@@ -67,6 +80,16 @@ class SettingsActivity : AppCompatActivity() {
             findPreference<Preference>(Prefs.KEY_BIOS)?.setOnPreferenceClickListener {
                 showBiosOptions()
                 true
+            }
+            findPreference<SwitchPreferenceCompat>(Prefs.KEY_DS_REAL_MIC)?.setOnPreferenceChangeListener { _, value ->
+                val granted = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) ==
+                    PackageManager.PERMISSION_GRANTED
+                if (value == true && !granted) {
+                    micPermission.launch(Manifest.permission.RECORD_AUDIO)
+                    false
+                } else {
+                    true
+                }
             }
             findPreference<EditTextPreference>(Prefs.KEY_DS_NICKNAME)?.setOnBindEditTextListener {
                 // The DS firmware has room for 10 characters.

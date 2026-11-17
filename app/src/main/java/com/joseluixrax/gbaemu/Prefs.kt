@@ -61,6 +61,9 @@ class Prefs(context: Context) {
     val dsNickname: String get() = raw.getString(KEY_DS_NICKNAME, "")?.trim().orEmpty()
     val dsJit: Boolean get() = raw.getBoolean(KEY_DS_JIT, true)
 
+    /** Record the phone's microphone while a DS game listens (needs RECORD_AUDIO). */
+    val dsRealMic: Boolean get() = raw.getBoolean(KEY_DS_REAL_MIC, false)
+
     // Library
     var romFolder: String?
         get() = raw.getString(KEY_ROM_FOLDER, null)
@@ -100,6 +103,7 @@ class Prefs(context: Context) {
         const val KEY_DS_SWAP = "ds_swap"
         const val KEY_DS_NICKNAME = "ds_nickname"
         const val KEY_DS_JIT = "ds_jit"
+        const val KEY_DS_REAL_MIC = "ds_real_mic"
         const val KEY_ABOUT = "about"
         const val KEY_OPEN_SAVES = "open_saves_folder"
         const val KEY_LICENSES = "licenses"

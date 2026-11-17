@@ -1,5 +1,6 @@
 package com.joseluixrax.gbaemu.ui.game
 
+import android.Manifest
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -18,6 +19,7 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -40,6 +42,7 @@ import com.joseluixrax.gbaemu.emulator.FrameBuffer
 import com.joseluixrax.gbaemu.emulator.GameFiles
 import com.joseluixrax.gbaemu.emulator.GbaCore
 import com.joseluixrax.gbaemu.emulator.GbaKeys
+import com.joseluixrax.gbaemu.emulator.MicInput
 import com.joseluixrax.gbaemu.emulator.NativeBridge
 import com.joseluixrax.gbaemu.emulator.NdsBridge
 import com.joseluixrax.gbaemu.emulator.NdsCore
@@ -72,6 +75,16 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     private lateinit var emulator: EmulatorThread
     private lateinit var haptics: Haptics
     private lateinit var sensors: SensorController
+    private lateinit var mic: MicInput
+
+    /** The DS game is listening to the microphone (reported by the emulator thread). */
+    private var gameWantsMic = false
+    private var askedForMic = false
+    private val stopMicLater = Runnable { mic.stop() }
+    private val micPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted) toast(getString(R.string.mic_permission_denied))
+        updateMic()
+    }
     private val frameBuffer = FrameBuffer()
 
     private lateinit var files: GameFiles
@@ -115,6 +128,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
         prefs = Prefs(this)
         haptics = Haptics(this)
         sensors = SensorController(this)
+        mic = MicInput(this)
         audio = AudioOutput(this)
         renderer = GameRenderer(frameBuffer)
 
@@ -178,6 +192,8 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     override fun onDestroy() {
         super.onDestroy()
         // emulator.core is the core that loaded the game (GBA unless a DS game loaded fine).
+        binding.root.removeCallbacks(stopMicLater)
+        mic.stop()
         emulator.post { emulator.core.unload() }
         emulator.quit()
         try {
@@ -195,6 +211,30 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     private fun updatePaused() {
         val running = gameLoaded && activityResumed && !menuOpen && !binding.pad.editMode
         emulator.setPaused(!running)
+        updateMic()
+    }
+
+    /**
+     * The phone's microphone records only while a DS game is listening, the
+     * setting is on and the game is running on screen.
+     */
+    private fun updateMic() {
+        val running = gameLoaded && activityResumed && !menuOpen && !binding.pad.editMode
+        val wanted = isDs && gameWantsMic && running && prefs.dsRealMic
+        binding.root.removeCallbacks(stopMicLater)
+        if (wanted) {
+            if (mic.hasPermission()) {
+                mic.start()
+            } else if (!askedForMic) {
+                // Turned on in the settings but the permission is gone: ask once per game.
+                askedForMic = true
+                micPermission.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        } else if (mic.isRunning) {
+            // Games often stop listening for a moment; don't close the mic on
+            // every pause in between, unless the game itself stopped.
+            if (running) binding.root.postDelayed(stopMicLater, MIC_LINGER_MS) else mic.stop()
+        }
     }
 
     // ------------------------------------------------------------ game setup
@@ -416,6 +456,13 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
 
     override fun onFpsUpdate(fps: Float) {
         if (showFps) binding.fpsText.post { binding.fpsText.text = getString(R.string.fps_format, fps) }
+    }
+
+    override fun onMicWanted(wanted: Boolean) {
+        runOnUiThread {
+            gameWantsMic = wanted
+            updateMic()
+        }
     }
 
     override fun onRumble() {
@@ -814,6 +861,7 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     companion object {
         const val EXTRA_DISPLAY_NAME = "display_name"
         private const val QUICK_SLOT = 1
+        private const val MIC_LINGER_MS = 2000L
 
         fun intent(context: Context, rom: Uri, displayName: String): Intent =
             Intent(context, GameActivity::class.java)

@@ -123,6 +123,32 @@ JNIEXPORT jboolean JNICALL JNI_FN(cheatsAdd)(JNIEnv* env, jobject, jstring name,
 	return nds_cheats_add(n.c_str(), c.c_str(), enabled) ? JNI_TRUE : JNI_FALSE;
 }
 
+JNIEXPORT void JNICALL JNI_FN(setMicLive)(JNIEnv*, jobject, jboolean live) {
+	nds_set_mic_live(live);
+}
+
+// Called from the recording thread; the samples go to a buffer that doesn't
+// depend on the game being loaded.
+JNIEXPORT void JNICALL JNI_FN(pushMic)(JNIEnv* env, jobject, jshortArray samples, jint count) {
+	jsize length = env->GetArrayLength(samples);
+	if (count > length) {
+		count = length;
+	}
+	if (count <= 0) {
+		return;
+	}
+	jshort* data = env->GetShortArrayElements(samples, nullptr);
+	if (!data) {
+		return;
+	}
+	nds_push_mic(data, (size_t) count);
+	env->ReleaseShortArrayElements(samples, data, JNI_ABORT);
+}
+
+JNIEXPORT jboolean JNICALL JNI_FN(micWanted)(JNIEnv*, jobject) {
+	return nds_mic_wanted() ? JNI_TRUE : JNI_FALSE;
+}
+
 JNIEXPORT jstring JNICALL JNI_FN(gameTitle)(JNIEnv* env, jobject) {
 	char title[64];
 	nds_game_title(title, sizeof(title));

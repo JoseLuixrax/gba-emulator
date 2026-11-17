@@ -12,6 +12,7 @@
 
 #include <zlib.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -84,6 +85,60 @@ static void writeAll(const std::string& path, const void* data, size_t size) {
 	if (!f) return;
 	fwrite(data, 1, size, f);
 	fclose(f);
+}
+
+// The ARM7 of the test ROM keeps reading the microphone through the
+// touchscreen controller and leaves the result (0-127, 64 = silence) here.
+static int micReading() {
+	return gNdsSession->nds->MainRAM[0x100004];
+}
+
+static void testMicrophone() {
+	runAndCountAudio(3);
+	CHECK(nds_mic_wanted(), "the game reads the mic but it isn't marked as listening");
+	int quiet = micReading();
+	CHECK(quiet >= 62 && quiet <= 66, "with no mic the reading is %d, should be ~64", quiet);
+
+	// The blow button: noise, so the reading moves well away from silence.
+	nds_set_mic_blow(true);
+	int farthest = 0;
+	for (int i = 0; i < 20; ++i) {
+		runAndCountAudio(1);
+		farthest = std::max(farthest, abs(micReading() - 64));
+	}
+	nds_set_mic_blow(false);
+	CHECK(farthest > 10, "blowing never moved the mic reading (at most %d from silence)", farthest);
+
+	// The phone's mic: what is pushed is what the game reads.
+	nds_set_mic_live(true);
+	std::vector<int16_t> loud(48000 / 60 * 2, 0x6000);
+	for (int i = 0; i < 4; ++i) {
+		nds_push_mic(loud.data(), loud.size());
+		runAndCountAudio(1);
+	}
+	int high = micReading();
+	CHECK(high >= 108 && high <= 116, "a loud positive signal reads %d, should be ~112", high);
+	std::vector<int16_t> negative(loud.size(), -0x6000);
+	for (int i = 0; i < 4; ++i) {
+		nds_push_mic(negative.data(), negative.size());
+		runAndCountAudio(1);
+	}
+	int low = micReading();
+	CHECK(low >= 12 && low <= 20, "a loud negative signal reads %d, should be ~16", low);
+	printf("mic: silence %d, blowing up to %d away, loud %d, negative %d\n", quiet, farthest, high, low);
+
+	// The buffer stays small however much is pushed, and empties when the
+	// app stops recording; pushes after that are ignored.
+	std::vector<int16_t> lots(100000, 0);
+	nds_push_mic(lots.data(), lots.size());
+	CHECK(nds_mic_buffered() <= 4096, "%zu samples waiting in the mic buffer", nds_mic_buffered());
+	nds_set_mic_live(false);
+	CHECK(nds_mic_buffered() == 0, "mic buffer not emptied");
+	nds_push_mic(loud.data(), loud.size());
+	CHECK(nds_mic_buffered() == 0, "samples accepted while not recording");
+	runAndCountAudio(3);
+	quiet = micReading();
+	CHECK(quiet >= 62 && quiet <= 66, "after recording stops the reading is %d, should be ~64", quiet);
 }
 
 static void testStatesRewindCheats(const std::string& outDir) {
@@ -266,6 +321,7 @@ int main(int argc, char** argv) {
 	std::vector<uint8_t> saved = readAll(savePath.c_str());
 	CHECK(saved.size() == 512 && memcmp(saved.data(), fake, 512) == 0, "save file has %zu bytes", saved.size());
 
+	testMicrophone();
 	testStatesRewindCheats(outDir);
 
 	nds_reset();

@@ -35,6 +35,9 @@ interface EmuCore {
     /** [type]: a [com.joseluixrax.gbaemu.cheats.CheatType] (the DS only has Action Replay). */
     fun cheatsAdd(name: String, code: String, type: Int, enabled: Boolean): Boolean
     fun pollRumble(): Boolean
+
+    /** The game is listening to the microphone (DS only). */
+    fun micWanted(): Boolean
     fun reset()
     fun unload()
 
@@ -69,6 +72,7 @@ object GbaCore : EmuCore {
     override fun cheatsAdd(name: String, code: String, type: Int, enabled: Boolean) =
         NativeBridge.cheatsAdd(name, code, type, enabled)
     override fun pollRumble() = NativeBridge.pollRumble()
+    override fun micWanted() = false
     override fun reset() = NativeBridge.reset()
     override fun unload() = NativeBridge.unload()
 }
@@ -97,6 +101,7 @@ object NdsCore : EmuCore {
     override fun cheatsAdd(name: String, code: String, type: Int, enabled: Boolean) =
         NdsBridge.cheatsAdd(name, code, enabled)
     override fun pollRumble() = false
+    override fun micWanted() = NdsBridge.micWanted()
     override fun reset() = NdsBridge.reset()
     override fun unload() = NdsBridge.unload()
 }

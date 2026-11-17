@@ -1,5 +1,6 @@
 #include "nds_core.h"
 
+#include "nds_mic.h"
 #include "nds_session.h"
 
 #include "Args.h"
@@ -312,6 +313,7 @@ void nds_unload(void) {
 	}
 	gNdsSession = nullptr;
 	delete session;
+	ndsMicSetWanted(false);
 }
 
 bool nds_is_loaded(void) {

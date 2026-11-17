@@ -165,6 +165,9 @@
     <string name="lid_closed_hint">Tapa cerrada. Casi todos los juegos se quedan en reposo hasta que la abras desde el menú.</string>
     <string name="pref_ds_jit">Modo rápido (JIT)</string>
     <string name="pref_ds_jit_summary">Mucho más rápido. Desactívalo solo si un juego de DS se cierra solo.</string>
+    <string name="pref_ds_real_mic">Usar el micrófono del móvil</string>
+    <string name="pref_ds_real_mic_summary">Para los juegos que piden hablar o soplar. Solo se enciende mientras el juego escucha y no se guarda nada. El botón MIC sigue funcionando.</string>
+    <string name="mic_permission_denied">Sin permiso para el micrófono se usa el botón MIC. Puedes darlo en los ajustes de Android, en Aplicaciones, AdvanceBoy, Permisos.</string>
     <string name="pref_cat_files">Archivos</string>
     <string name="saves_folder">Abrir carpeta de partidas</string>
     <string name="pref_open_saves_summary">Tus partidas .sav y estados guardados. También aparecen en la app Archivos como «AdvanceBoy».</string>

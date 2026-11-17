@@ -5,11 +5,16 @@
     <!-- Rumble (Pokémon Pinball, WarioWare Twisted...) and button haptics. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- DS games that ask you to talk or blow. Only asked for when the user
+         turns it on, and only recording while a game is listening. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
         android:allowBackup="true"

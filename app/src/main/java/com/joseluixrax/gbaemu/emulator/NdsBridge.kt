@@ -71,5 +71,13 @@ object NdsBridge {
     /** Action Replay DS codes ("XXXXXXXX YYYYYYYY" pairs). False if the code can't be read. */
     external fun cheatsClear()
     external fun cheatsAdd(name: String, code: String, enabled: Boolean): Boolean
+    /** The phone's microphone: while live, pushed samples (mono, 48 kHz) replace silence. */
+    external fun setMicLive(live: Boolean)
+
+    /** Any thread; works even with no game loaded. */
+    external fun pushMic(samples: ShortArray, count: Int)
+
+    /** The game is listening to the microphone right now. */
+    external fun micWanted(): Boolean
     external fun gameTitle(): String
 }

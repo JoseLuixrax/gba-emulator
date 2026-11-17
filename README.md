@@ -50,6 +50,7 @@ Se abren igual que los de GBA, desde la misma lista. No hace falta BIOS ni firmw
 - El botón ↕ intercambia las pantallas: la de abajo pasa a ser la principal (arriba, a la izquierda, la grande o la única que se ve). Va muy bien con "una grande y otra pequeña" en los juegos que se juegan casi todo con la táctil. También está en el menú del juego y se puede poner en un botón del mando, y la app se acuerda de cómo lo dejaste.
 - La pantalla de abajo es táctil: tocas y arrastras con el dedo como si fuera el lápiz. Los botones que estén encima de ella tienen preferencia, y si juegas con mando y los controles están escondidos, toda la pantalla responde al dedo.
 - El botón MIC hace como si soplaras al micrófono, que es lo que piden algunos juegos.
+- También se puede usar el micrófono del móvil de verdad (Ajustes > Nintendo DS > Usar el micrófono del móvil), para los juegos en los que hay que hablar o soplar con más control. Android pide el permiso la primera vez. El micrófono solo se enciende mientras el juego está escuchando (el puntito verde de Android sale solo entonces) y se apaga al salir, al abrir el menú o al cambiar de app. Lo que se graba va directo al juego y no se guarda en ningún sitio. El botón MIC sigue funcionando igual.
 - Desde el menú del juego puedes cerrar y abrir la tapa de la consola. La mayoría de juegos se ponen en reposo, pero algunos lo usan en la propia partida. También se puede asignar a un botón del mando.
 - En Ajustes > Nintendo DS puedes poner tu nombre (hasta 10 letras), el que tendría la consola. Algunos juegos lo enseñan, y se aplica la próxima vez que abras un juego.
 - El idioma de los juegos es el del móvil (español, inglés, francés, alemán, italiano o japonés).
@@ -152,11 +153,10 @@ cmake --build build/native-test -j
 
 El primero ejecuta las ROMs de `native-test/roms` ([gba-tests de jsmolka](https://github.com/jsmolka/gba-tests), licencia MIT), comprueba imagen, audio, estados, partidas Flash y SRAM, rebobinado, trucos y velocidades, y guarda una captura de cada una.
 
-El segundo arranca una ROM de DS casera hecha solo para esto (el código está en `native-test/nds-rom` y se genera con `build.py`) y comprueba las dos pantallas, los botones, el audio a cada velocidad, la carga desde archivo, que la partida se guarde bien, los estados (también los `.mln` de melonDS y que uno roto no estropee la partida), el rebobinado y los trucos Action Replay. La ROM lleva un contador de fotogramas en memoria que se pinta en pantalla, y así se ve si un estado o el rebobinado vuelven de verdad al momento correcto.
+El segundo arranca una ROM de DS casera hecha solo para esto (el código está en `native-test/nds-rom` y se genera con `build.py`) y comprueba las dos pantallas, los botones, el audio a cada velocidad, la carga desde archivo, que la partida se guarde bien, el micrófono (la ROM lo lee como un juego, a través del controlador de la pantalla táctil, y se comprueba el silencio, el soplido y lo que llega del móvil), los estados (también los `.mln` de melonDS y que uno roto no estropee la partida), el rebobinado y los trucos Action Replay. La ROM lleva un contador de fotogramas en memoria que se pinta en pantalla, y así se ve si un estado o el rebobinado vuelven de verdad al momento correcto.
 
 ## Pendiente
 
-- DS: usar el micrófono de verdad, para los juegos que piden hablar o soplar con más control.
 - Cable link por wifi para jugar a dobles o intercambiar Pokémon entre dos móviles.
 - Botones turbo y combinaciones tipo A+B.
 - Copia de las partidas en la nube.

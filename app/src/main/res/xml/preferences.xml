@@ -235,6 +235,12 @@
             app:key="ds_jit"
             app:summary="@string/pref_ds_jit_summary"
             app:title="@string/pref_ds_jit" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="ds_real_mic"
+            app:summary="@string/pref_ds_real_mic_summary"
+            app:title="@string/pref_ds_real_mic" />
     </PreferenceCategory>
 
     <PreferenceCategory

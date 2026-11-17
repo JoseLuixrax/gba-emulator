@@ -54,7 +54,7 @@ else()
 	set(ENABLE_GDBSTUB OFF CACHE BOOL "" FORCE)
 	set(ENABLE_LTO_RELEASE OFF CACHE BOOL "" FORCE)
 	add_subdirectory("${MELONDS_DIR}" melonds EXCLUDE_FROM_ALL)
-	set(NDS_SOURCES nds/nds_core.cpp nds/nds_platform.cpp nds/nds_states.cpp)
+	set(NDS_SOURCES nds/nds_core.cpp nds/nds_platform.cpp nds/nds_states.cpp nds/nds_mic.cpp)
 endif()
 
 if(ANDROID)
