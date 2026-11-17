@@ -15,6 +15,7 @@ import android.view.View
 import androidx.preference.PreferenceManager
 import com.joseluixrax.gbaemu.emulator.DsKeys
 import com.joseluixrax.gbaemu.emulator.GbaKeys
+import com.joseluixrax.gbaemu.emulator.TurboKeys
 import java.util.EnumMap
 import kotlin.math.atan2
 import kotlin.math.hypot
@@ -36,6 +37,7 @@ class VirtualPadView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     interface Listener {
+        /** Key bits; turbo buttons come shifted up by [TurboKeys.SHIFT]. */
         fun onPadKeysChanged(keys: Int)
         fun onMenuPressed()
         fun onFastForwardButton(down: Boolean)
@@ -72,6 +74,16 @@ class VirtualPadView @JvmOverloads constructor(
         set(value) {
             field = value
             invalidate()
+        }
+
+    /** Turbo A / Turbo B buttons (settings). */
+    var showTurbo = false
+        set(value) {
+            if (field != value) {
+                field = value
+                releaseAll()
+                invalidate()
+            }
         }
 
     /** Fast forward is toggled on: draw its button highlighted. */
@@ -213,6 +225,7 @@ class VirtualPadView @JvmOverloads constructor(
     private fun isShown(element: PadElement) = when (element) {
         PadElement.REWIND -> showRewind && !dsMode
         PadElement.X, PadElement.Y, PadElement.MIC, PadElement.SWAP -> dsMode
+        PadElement.TURBO_A, PadElement.TURBO_B -> showTurbo
         else -> true
     }
 
@@ -233,7 +246,13 @@ class VirtualPadView @JvmOverloads constructor(
                     val radius = min(r.width(), r.height()) / 2
                     canvas.drawCircle(r.centerX(), r.centerY(), radius, fillPaint)
                     canvas.drawCircle(r.centerX(), r.centerY(), radius, strokePaint)
-                    drawLabel(canvas, element.label, r, r.height() * 0.5f)
+                    if (element.isTurbo) {
+                        // The letter, and "TURBO" small underneath.
+                        drawLabel(canvas, element.label, r, r.height() * 0.42f, -r.height() * 0.08f)
+                        drawLabel(canvas, "TURBO", r, r.height() * 0.15f, r.height() * 0.22f)
+                    } else {
+                        drawLabel(canvas, element.label, r, r.height() * 0.5f)
+                    }
                 }
                 PadElement.Shape.PILL -> {
                     val radius = r.height() / 2
@@ -257,10 +276,10 @@ class VirtualPadView @JvmOverloads constructor(
         textPaint.color = if (isPressed) Color.argb(a, 20, 20, 30) else Color.argb(a, 255, 255, 255)
     }
 
-    private fun drawLabel(canvas: Canvas, label: String, r: RectF, size: Float) {
+    private fun drawLabel(canvas: Canvas, label: String, r: RectF, size: Float, offsetY: Float = 0f) {
         if (label.isEmpty()) return
         textPaint.textSize = size
-        val y = r.centerY() - (textPaint.descent() + textPaint.ascent()) / 2
+        val y = r.centerY() + offsetY - (textPaint.descent() + textPaint.ascent()) / 2
         canvas.drawText(label, r.centerX(), y, textPaint)
     }
 
@@ -475,6 +494,8 @@ class VirtualPadView @JvmOverloads constructor(
         PadElement.X -> DsKeys.X
         PadElement.Y -> DsKeys.Y
         PadElement.MIC -> DsKeys.MIC
+        PadElement.TURBO_A -> GbaKeys.A shl TurboKeys.SHIFT
+        PadElement.TURBO_B -> GbaKeys.B shl TurboKeys.SHIFT
         else -> 0
     }
 
@@ -561,7 +582,10 @@ class VirtualPadView @JvmOverloads constructor(
     }
 
     private companion object {
-        val SLIDABLE = listOf(PadElement.A, PadElement.B, PadElement.X, PadElement.Y, PadElement.L, PadElement.R)
+        val SLIDABLE = listOf(
+            PadElement.A, PadElement.B, PadElement.X, PadElement.Y, PadElement.L, PadElement.R,
+            PadElement.TURBO_A, PadElement.TURBO_B,
+        )
 
         // Buttons that do something in the app rather than press a key.
         val TAP_BUTTONS = setOf(PadElement.MENU, PadElement.FAST_FORWARD, PadElement.REWIND, PadElement.SWAP)

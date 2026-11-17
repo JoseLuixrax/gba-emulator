@@ -7,6 +7,7 @@ import androidx.annotation.StringRes
 import com.joseluixrax.gbaemu.R as Res
 import com.joseluixrax.gbaemu.emulator.DsKeys
 import com.joseluixrax.gbaemu.emulator.GbaKeys
+import com.joseluixrax.gbaemu.emulator.TurboKeys
 
 /** Things a physical button (gamepad, keyboard) can be bound to. [key]: console key bit, 0 for app actions. */
 enum class InputAction(val id: String, @StringRes val label: Int, val key: Int = 0) {
@@ -23,6 +24,10 @@ enum class InputAction(val id: String, @StringRes val label: Int, val key: Int =
     START("start", Res.string.key_start, GbaKeys.START),
     SELECT("select", Res.string.key_select, GbaKeys.SELECT),
     MIC("mic", Res.string.key_mic, DsKeys.MIC),
+    TURBO_A("turbo_a", Res.string.key_turbo_a, GbaKeys.A shl TurboKeys.SHIFT),
+    TURBO_B("turbo_b", Res.string.key_turbo_b, GbaKeys.B shl TurboKeys.SHIFT),
+    TURBO_X("turbo_x", Res.string.key_turbo_x, DsKeys.X shl TurboKeys.SHIFT),
+    TURBO_Y("turbo_y", Res.string.key_turbo_y, DsKeys.Y shl TurboKeys.SHIFT),
     FAST_FORWARD("fast_forward", Res.string.key_fast_forward),
     REWIND("rewind", Res.string.key_rewind),
     MENU("menu", Res.string.key_menu),

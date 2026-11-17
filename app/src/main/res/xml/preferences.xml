@@ -106,6 +106,20 @@
             app:summary="@string/pref_dpad_diagonals_summary"
             app:title="@string/pref_dpad_diagonals" />
         <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="turbo_buttons"
+            app:summary="@string/pref_turbo_buttons_summary"
+            app:title="@string/pref_turbo_buttons" />
+        <ListPreference
+            app:defaultValue="2"
+            app:entries="@array/turbo_speed_entries"
+            app:entryValues="@array/turbo_speed_values"
+            app:iconSpaceReserved="false"
+            app:key="turbo_speed"
+            app:title="@string/pref_turbo_speed"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
             app:defaultValue="true"
             app:iconSpaceReserved="false"
             app:key="ff_toggle"

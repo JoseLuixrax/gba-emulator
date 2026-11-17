@@ -76,6 +76,10 @@
     <string name="key_x" translatable="false">X (DS)</string>
     <string name="key_y" translatable="false">Y (DS)</string>
     <string name="key_mic">Microphone (DS)</string>
+    <string name="key_turbo_a">Turbo A</string>
+    <string name="key_turbo_b">Turbo B</string>
+    <string name="key_turbo_x">Turbo X (DS)</string>
+    <string name="key_turbo_y">Turbo Y (DS)</string>
     <string name="key_l" translatable="false">L</string>
     <string name="key_r" translatable="false">R</string>
     <string name="key_start" translatable="false">START</string>
@@ -135,6 +139,13 @@
     <string name="pref_haptics">Vibrate on button press</string>
     <string name="pref_dpad_diagonals">D-pad diagonals</string>
     <string name="pref_dpad_diagonals_summary">Allow pressing two directions at once</string>
+    <string name="pref_turbo_buttons">Turbo buttons on screen</string>
+    <string name="pref_turbo_buttons_summary">Turbo A and Turbo B: while you hold them they press the button over and over. They can also go on a gamepad button.</string>
+    <string name="pref_turbo_speed">Turbo speed</string>
+    <string name="turbo_speed_30">30 presses a second</string>
+    <string name="turbo_speed_15">15 presses a second</string>
+    <string name="turbo_speed_10">10 presses a second</string>
+    <string name="turbo_speed_7">7.5 presses a second</string>
     <string name="pref_ff_toggle">Fast forward button</string>
     <string name="pref_ff_toggle_on">Tap to turn on / off</string>
     <string name="pref_ff_toggle_off">Hold to fast forward</string>

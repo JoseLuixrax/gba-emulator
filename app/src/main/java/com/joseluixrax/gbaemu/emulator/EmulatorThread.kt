@@ -48,6 +48,11 @@ class EmulatorThread(
 
     @Volatile var keys = 0
 
+    /** Turbo buttons held right now (same bits as [keys]), and their speed in frames. */
+    @Volatile var turboKeys = 0
+    @Volatile var turboHalfPeriod = 2
+    private var turboFrame = 0L
+
     /** Finger on the DS touch screen ([EmuCore.packTouch]), or [EmuCore.NO_TOUCH]. */
     @Volatile var touch = EmuCore.NO_TOUCH
     @Volatile var fastForward = false
@@ -150,7 +155,7 @@ class EmulatorThread(
 
     private fun stepNormal(nextFrameTime: Long): Long {
         setCoreAudioSpeed(1f)
-        core.setInput(keys, touch)
+        core.setInput(inputKeys(), touch)
         core.runFrame()
         publishFrame(1)
         return playAudioOrPace(audioEnabled, nextFrameTime)
@@ -166,7 +171,7 @@ class EmulatorThread(
         if (speed <= 0f) {
             // Unlimited: as fast as the phone can go, there is no speed to play the music at.
             setCoreAudioSpeed(1f)
-            core.setInput(keys, touch)
+            core.setInput(inputKeys(), touch)
             core.runFrame()
             core.discardAudio()
             publishFrame(1)
@@ -176,7 +181,7 @@ class EmulatorThread(
         val frames = speed.roundToInt()
         val withSound = audioEnabled && fastForwardAudio
         setCoreAudioSpeed(if (withSound) frames.toFloat() else 1f)
-        core.setInput(keys, touch)
+        core.setInput(inputKeys(), touch)
         repeat(frames) { core.runFrame() }
         publishFrame(frames)
         return playAudioOrPace(withSound, nextFrameTime)
@@ -190,7 +195,7 @@ class EmulatorThread(
     private fun stepSlowMotion(speed: Float, nextFrameTime: Long): Long {
         val withSound = audioEnabled && fastForwardAudio
         setCoreAudioSpeed(if (withSound) speed else 1f)
-        core.setInput(keys, touch)
+        core.setInput(inputKeys(), touch)
         core.runFrame()
         publishFrame(1)
         return playAudioOrPace(withSound, nextFrameTime, (core.frameNanos / speed).toLong())
@@ -208,6 +213,16 @@ class EmulatorThread(
         }
         // No audio output to wait on: keep time ourselves.
         return pace(nextFrameTime, period)
+    }
+
+    /** The keys for the next emulator step, turbo presses included. */
+    private fun inputKeys(): Int {
+        val turbo = turboKeys
+        if (turbo == 0) {
+            turboFrame = 0
+            return keys
+        }
+        return TurboClock.keys(turboFrame++, keys, turbo, turboHalfPeriod)
     }
 
     private fun setCoreAudioSpeed(speed: Float) {

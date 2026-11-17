@@ -47,6 +47,7 @@ import com.joseluixrax.gbaemu.emulator.NativeBridge
 import com.joseluixrax.gbaemu.emulator.NdsBridge
 import com.joseluixrax.gbaemu.emulator.NdsCore
 import com.joseluixrax.gbaemu.emulator.RomLoader
+import com.joseluixrax.gbaemu.emulator.TurboKeys
 import com.joseluixrax.gbaemu.ui.cheats.CheatsActivity
 import com.joseluixrax.gbaemu.ui.library.RecentGames
 import com.joseluixrax.gbaemu.ui.settings.SettingsActivity
@@ -393,7 +394,9 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
             hapticsEnabled = prefs.haptics
             diagonals = prefs.dpadDiagonals
             showRewind = prefs.rewindEnabled
+            showTurbo = prefs.turboButtons
         }
+        emulator.turboHalfPeriod = prefs.turboHalfPeriod
         fastForwardToggleMode = prefs.fastForwardToggle
         emulator.fastForwardSpeed = prefs.fastForwardSpeed
         emulator.fastForwardAudio = prefs.fastForwardAudio
@@ -524,8 +527,10 @@ class GameActivity : AppCompatActivity(), EmulatorThread.Callbacks, VirtualPadVi
     }
 
     private fun pushKeys() {
+        val all = touchKeys or physicalKeys or stickKeys
         val lid = if (lidClosed) DsKeys.LID else 0
-        emulator.keys = touchKeys or physicalKeys or stickKeys or lid
+        emulator.keys = (all and TurboKeys.NORMAL_MASK) or lid
+        emulator.turboKeys = all ushr TurboKeys.SHIFT
     }
 
     private fun setFastForward(on: Boolean) {

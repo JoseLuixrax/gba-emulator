@@ -31,6 +31,10 @@ class Prefs(context: Context) {
     val fastForwardToggle: Boolean get() = raw.getBoolean(KEY_FF_TOGGLE, true)
     val hidePadWithGamepad: Boolean get() = raw.getBoolean(KEY_HIDE_PAD_GAMEPAD, true)
     val dpadDiagonals: Boolean get() = raw.getBoolean(KEY_DPAD_DIAGONALS, true)
+    val turboButtons: Boolean get() = raw.getBoolean(KEY_TURBO_BUTTONS, false)
+
+    /** Frames a turbo button stays down (and then up): 1 = 30 presses a second, 2 = 15... */
+    val turboHalfPeriod: Int get() = raw.getString(KEY_TURBO_SPEED, "2")?.toIntOrNull()?.coerceIn(1, 8) ?: 2
 
     // Emulation
     /** » button speed: 2-8 fast forward, 0.1-0.5 slow motion, 0 = unlimited. */
@@ -85,6 +89,8 @@ class Prefs(context: Context) {
         const val KEY_FF_TOGGLE = "ff_toggle"
         const val KEY_HIDE_PAD_GAMEPAD = "hide_pad_gamepad"
         const val KEY_DPAD_DIAGONALS = "dpad_diagonals"
+        const val KEY_TURBO_BUTTONS = "turbo_buttons"
+        const val KEY_TURBO_SPEED = "turbo_speed"
         const val KEY_RESET_LAYOUT = "reset_layout"
         const val KEY_KEY_MAPPING = "key_mapping"
         const val KEY_FF_SPEED = "ff_speed"

@@ -14,6 +14,9 @@ enum class PadElement(val id: String, val label: String, val shape: Shape, val b
     Y("y", "Y", Shape.CIRCLE, 0.17f, 0.17f),
     MIC("mic", "MIC", Shape.PILL, 0.13f, 0.065f),
     SWAP("swap", "↕", Shape.CIRCLE, 0.10f, 0.10f),
+    // Optional (settings): press A / B over and over while held.
+    TURBO_A("turbo_a", "A", Shape.CIRCLE, 0.13f, 0.13f),
+    TURBO_B("turbo_b", "B", Shape.CIRCLE, 0.13f, 0.13f),
     L("l", "L", Shape.PILL, 0.23f, 0.09f),
     R("r", "R", Shape.PILL, 0.23f, 0.09f),
     SELECT("select", "SELECT", Shape.PILL, 0.17f, 0.065f),
@@ -24,6 +27,8 @@ enum class PadElement(val id: String, val label: String, val shape: Shape, val b
     ;
 
     enum class Shape { DPAD, CIRCLE, PILL }
+
+    val isTurbo: Boolean get() = this == TURBO_A || this == TURBO_B
 
     companion object {
         fun byId(id: String) = entries.firstOrNull { it.id == id }
@@ -110,6 +115,8 @@ object PadLayout {
                 put(PadElement.MIC, 0.30f * u, 0.27f * u)
                 put(PadElement.FAST_FORWARD, w - 0.10f * u, 0.27f * u)
                 put(PadElement.SWAP, w - 0.30f * u, 0.27f * u)
+                put(PadElement.TURBO_A, w - 0.09f * u, h - 0.15f * u, DS_TURBO_SCALE)
+                put(PadElement.TURBO_B, w - 0.45f * u, h - 0.15f * u, DS_TURBO_SCALE)
             } else {
                 // Portrait: both screens on top (see DsScreens), controls in the space left.
                 val u = w
@@ -123,6 +130,8 @@ object PadLayout {
                 put(PadElement.SELECT, w / 2f - 0.10f * u, h - 0.045f * u)
                 put(PadElement.START, w / 2f + 0.10f * u, h - 0.045f * u)
                 put(PadElement.SWAP, w - 0.07f * u, h - 0.06f * u)
+                put(PadElement.TURBO_A, w - 0.07f * u, h - 0.165f * u, DS_TURBO_SCALE)
+                put(PadElement.TURBO_B, w - 0.43f * u, h - 0.165f * u, DS_TURBO_SCALE)
             }
             return map
         }
@@ -139,6 +148,8 @@ object PadLayout {
             put(PadElement.MENU, w / 2f, 0.07f * u)
             put(PadElement.REWIND, 0.10f * u, 0.27f * u)
             put(PadElement.FAST_FORWARD, w - 0.10f * u, 0.27f * u)
+            put(PadElement.TURBO_A, w - 0.12f * u, h - 0.60f * u)
+            put(PadElement.TURBO_B, w - 0.31f * u, h - 0.44f * u)
         } else {
             // Portrait: game on top, controls underneath.
             val u = w
@@ -152,11 +163,14 @@ object PadLayout {
             put(PadElement.MENU, w / 2f, h - 0.67f * u)
             put(PadElement.REWIND, w / 2f - 0.13f * u, h - 0.67f * u)
             put(PadElement.FAST_FORWARD, w / 2f + 0.13f * u, h - 0.67f * u)
+            put(PadElement.TURBO_A, w - 0.14f * u, h - 0.55f * u)
+            put(PadElement.TURBO_B, w - 0.34f * u, h - 0.47f * u)
         }
         return map
     }
 
     private const val DS_FACE_SCALE = 0.85f
+    private const val DS_TURBO_SCALE = 0.77f
     const val MIN_SCALE = 0.5f
     const val MAX_SCALE = 2.0f
 }

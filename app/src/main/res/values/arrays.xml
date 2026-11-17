@@ -66,6 +66,20 @@
         <item>single</item>
     </string-array>
 
+    <string-array name="turbo_speed_entries">
+        <item>@string/turbo_speed_30</item>
+        <item>@string/turbo_speed_15</item>
+        <item>@string/turbo_speed_10</item>
+        <item>@string/turbo_speed_7</item>
+    </string-array>
+    <!-- Frames down (and then up) per press. -->
+    <string-array name="turbo_speed_values" translatable="false">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
     <string-array name="frameskip_entries">
         <item>@string/frameskip_off</item>
         <item>@string/frameskip_1</item>

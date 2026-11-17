@@ -68,6 +68,10 @@
     <string name="key_left">Izquierda</string>
     <string name="key_right">Derecha</string>
     <string name="key_mic">Micrófono (DS)</string>
+    <string name="key_turbo_a">Turbo A</string>
+    <string name="key_turbo_b">Turbo B</string>
+    <string name="key_turbo_x">Turbo X (DS)</string>
+    <string name="key_turbo_y">Turbo Y (DS)</string>
     <string name="key_fast_forward">Avance rápido</string>
     <string name="key_rewind">Rebobinar</string>
     <string name="key_menu">Menú</string>
@@ -122,6 +126,13 @@
     <string name="pref_haptics">Vibrar al pulsar</string>
     <string name="pref_dpad_diagonals">Diagonales en la cruceta</string>
     <string name="pref_dpad_diagonals_summary">Permite pulsar dos direcciones a la vez</string>
+    <string name="pref_turbo_buttons">Botones turbo en pantalla</string>
+    <string name="pref_turbo_buttons_summary">Turbo A y Turbo B: mientras los mantienes, pulsan el botón una y otra vez. También se pueden poner en un botón del mando.</string>
+    <string name="pref_turbo_speed">Velocidad del turbo</string>
+    <string name="turbo_speed_30">30 pulsaciones por segundo</string>
+    <string name="turbo_speed_15">15 pulsaciones por segundo</string>
+    <string name="turbo_speed_10">10 pulsaciones por segundo</string>
+    <string name="turbo_speed_7">7,5 pulsaciones por segundo</string>
     <string name="pref_ff_toggle">Botón de avance rápido</string>
     <string name="pref_ff_toggle_on">Tocar para activar / desactivar</string>
     <string name="pref_ff_toggle_off">Mantener pulsado para acelerar</string>

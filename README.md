@@ -24,6 +24,7 @@ Necesita Android 8.0 o superior. Para los juegos de DS hace falta además un mó
 - Trucos GameShark, Action Replay y CodeBreaker. En Game Boy, GameShark y Game Genie. En DS, Action Replay DS.
 - Controles táctiles que puedes mover y cambiar de tamaño, por separado en vertical y en horizontal.
 - Mandos Bluetooth o USB y teclado, con los botones configurables.
+- Botones turbo: Turbo A y Turbo B en pantalla (se activan en Ajustes > Controles) y también Turbo A, B, X e Y para el mando. Mientras los mantienes pulsan el botón una y otra vez, a 30, 15, 10 o 7,5 pulsaciones por segundo según elijas.
 - Filtros de imagen (nítido, pixelado, suavizado), líneas de escaneo, rejilla LCD y colores como los de la pantalla original de la GBA.
 - Reloj de los Pokémon de GBA (también en hacks), vibración, sensor de inclinación, giroscopio y sensor solar para los juegos que los usan.
 - BIOS opcional. Sin ella funciona igual con casi todos los juegos.
@@ -158,7 +159,7 @@ El segundo arranca una ROM de DS casera hecha solo para esto (el código está e
 ## Pendiente
 
 - Cable link por wifi para jugar a dobles o intercambiar Pokémon entre dos móviles.
-- Botones turbo y combinaciones tipo A+B.
+- Combinaciones tipo A+B en un solo botón.
 - Copia de las partidas en la nube.
 - Skins para los controles.
 
